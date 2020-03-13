@@ -57,6 +57,8 @@ class TestBlock(unittest.TestCase):
         self.assertEqual(exp_upleft + exp_lowright,
                          act_upleft + act_lowright)
 
+    def test_smash(self):
+
 
 if __name__ == "__main__":
     unittest.main(exit=False)

@@ -231,7 +231,38 @@ class Block:
         Return True iff the smash was performed.
         """
         # TODO: Implement me
-        return True  # FIXME
+        # If this Block's level is <max_depth>, do nothing.
+        # If this block has children, do nothing.
+        # FIXME: FIXED
+        if self.smashable():
+
+            # 1. when smashing, turn this block colour off
+            self.colour = None
+
+            # 2. extract the positions for its children
+            children_positions = self._children_positions()
+
+            # 3. create children
+            children_size = int(self.size / 2)
+            children_level = self.level + 1
+
+            c1 = Block(children_positions[0], children_size,
+                       random.choice(COLOUR_LIST), children_level,
+                       self.max_depth)
+            c2 = Block(children_positions[1], children_size,
+                       random.choice(COLOUR_LIST), children_level,
+                       self.max_depth)
+            c3 = Block(children_positions[2], children_size,
+                       random.choice(COLOUR_LIST), children_level,
+                       self.max_depth)
+            c4 = Block(children_positions[3], children_size,
+                       random.choice(COLOUR_LIST), children_level,
+                       self.max_depth)
+
+            self.children.extend([c1, c2, c3, c4])
+            return True
+        else:
+            return False
 
     def swap(self, direction: int) -> bool:
         """Swap the child Blocks of this Block.
