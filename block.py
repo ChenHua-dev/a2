@@ -188,7 +188,30 @@ class Block:
         Block.
         """
         # TODO: Implement me
-        return  # FIXME
+        origin_x = self.position[0]
+        origin_y = self.position[1]
+
+        dx = position[0] - origin_x
+        dy = position[1] - origin_y
+
+        # 1. Set the position of this Block to <position>
+        self.position = position
+
+        # 2. Update all its descendants to have position consistent with this
+        #    Block's
+        # FIXME: FIXED
+        if len(self.children) == 0:
+            return None
+        elif len(self.children) == 4:
+
+            for child in self.children:
+                child_position = child.position
+                new_child_x = child_position[0] + dx
+                new_child_y = child_position[1] + dy
+                new_child_position = (new_child_x, new_child_y)
+                child._update_children_positions(new_child_position)
+        else:
+            pass
 
     def smashable(self) -> bool:
         """Return True iff this block can be smashed.
@@ -204,7 +227,7 @@ class Block:
 
         If this Block's level is <max_depth>, do nothing. If this block has
         children, do nothing.
-        
+
         Return True iff the smash was performed.
         """
         # TODO: Implement me
@@ -215,7 +238,7 @@ class Block:
 
         If this Block has no children, do nothing. Otherwise, if <direction> is
         1, swap vertically. If <direction> is 0, swap horizontally.
-        
+
         Return True iff the swap was performed.
 
         Precondition: <direction> is either 0 or 1
@@ -228,7 +251,7 @@ class Block:
 
         If this Block has no children, do nothing. If <direction> is 1, rotate
         clockwise. If <direction> is 3, rotate counter-clockwise.
-        
+
         Return True iff the rotate was performed.
 
         Precondition: <direction> is either 1 or 3.
