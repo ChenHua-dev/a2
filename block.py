@@ -243,23 +243,23 @@ class Block:
             children_positions = self._children_positions()
 
             # 3. create children
-            children_size = int(self.size / 2)
+            children_size = self._child_size()  # int(self.size / 2)
             children_level = self.level + 1
 
-            c1 = Block(children_positions[0], children_size,
+            c0 = Block(children_positions[0], children_size,
                        random.choice(COLOUR_LIST), children_level,
                        self.max_depth)
-            c2 = Block(children_positions[1], children_size,
+            c1 = Block(children_positions[1], children_size,
                        random.choice(COLOUR_LIST), children_level,
                        self.max_depth)
-            c3 = Block(children_positions[2], children_size,
+            c2 = Block(children_positions[2], children_size,
                        random.choice(COLOUR_LIST), children_level,
                        self.max_depth)
-            c4 = Block(children_positions[3], children_size,
+            c3 = Block(children_positions[3], children_size,
                        random.choice(COLOUR_LIST), children_level,
                        self.max_depth)
 
-            self.children.extend([c1, c2, c3, c4])
+            self.children.extend([c0, c1, c2, c3])
             return True
         else:
             return False
@@ -275,7 +275,26 @@ class Block:
         Precondition: <direction> is either 0 or 1
         """
         # TODO: Implement me
-        return True  # FIXME
+        # FIXME: FIXED
+        if len(self.children) == 0:
+            return True
+        elif len(self.children) == 4:
+            children_positions = self._children_positions()[:]
+            # vertical-swap
+            if direction == 1:
+                self.children[0].position = children_positions[1]
+                self.children[1].position = children_positions[0]
+                self.children[2].position = children_positions[3]
+                self.children[3].position = children_positions[2]
+            # horizontal-swap
+            elif direction == 0:
+                self.children[0].position = children_positions[3]
+                self.children[1].position = children_positions[2]
+                self.children[2].position = children_positions[1]
+                self.children[3].position = children_positions[0]
+            return True
+        else:
+            pass
 
     def rotate(self, direction: int) -> bool:
         """Rotate this Block and all its descendants.
@@ -288,7 +307,49 @@ class Block:
         Precondition: <direction> is either 1 or 3.
         """
         # TODO: Implement me
-        return True  # FIXME
+        # Clockwise rotation
+        if direction == 1:
+            # Base case
+            if len(self.children) == 0:
+                return False
+            # Recursive case
+            else:
+                children_positions = [self.children[0].position,
+                                      self.children[1].position,
+                                      self.children[2].position,
+                                      self.children[3].position]
+
+                self.children[0].position = children_positions[3]
+                self.children[1].position = children_positions[0]
+                self.children[2].position = children_positions[1]
+                self.children[3].position = children_positions[2]
+
+                for child in self.children:
+                    child.rotate(direction)
+                return True
+
+        # Counter-clockwise rotation
+        elif direction == 3:
+            # Base case
+            if len(self.children) == 0:
+                return False
+            # Recursive case
+            else:
+                children_positions = [self.children[0].position,
+                                      self.children[1].position,
+                                      self.children[2].position,
+                                      self.children[3].position]
+
+                self.children[0].position = children_positions[1]
+                self.children[1].position = children_positions[2]
+                self.children[2].position = children_positions[3]
+                self.children[3].position = children_positions[0]
+
+                for child in self.children:
+                    child.rotate(direction)
+                return True
+        else:
+            pass
 
     def paint(self, colour: Tuple[int, int, int]) -> bool:
         """Change this Block's colour iff it is a leaf at a level of max_depth
