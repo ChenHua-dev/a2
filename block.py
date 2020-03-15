@@ -451,7 +451,56 @@ class Block:
         Remember that a deep copy has new blocks (not aliases) at every level.
         """
         # TODO: Implement me
-        pass  # FIXME
+        if self.children == []:
+            curr_position = self.position
+            curr_size = self.size
+            curr_colour = self.colour
+            curr_level = self.level
+            curr_max_depth = self.max_depth
+            copy_block = Block(curr_position, curr_size,
+                               curr_colour, curr_level, curr_max_depth)
+            return copy_block
+        else:
+            curr_position = self.position
+            curr_size = self.size
+            curr_colour = self.colour
+            curr_level = self.level
+            curr_max_depth = self.max_depth
+            copy_block = Block(curr_position, curr_size,
+                               curr_colour, curr_level, curr_max_depth)
+            for child in self.children:
+                temp = child.create_copy()
+                copy_block.children.append(temp)
+            return copy_block
+
+    # test
+    # import random
+    # random.seed(148)
+    # board = Block((2, 2), 4, None, 0, 2)
+    # c1 = Block((4, 2), 2, random.choice(COLOUR_LIST), 1, 2)
+    # c2 = Block((2, 2), 2, random.choice(COLOUR_LIST), 1, 2)
+    # c3 = Block((2, 4), 2, random.choice(COLOUR_LIST), 1, 2)
+    # c3_1 = Block((3, 2), 1, random.choice(COLOUR_LIST), 1, 2)
+    # c3_2 = Block((2, 2), 1, random.choice(COLOUR_LIST), 1, 2)
+    # c3_3 = Block((2, 3), 1, random.choice(COLOUR_LIST), 1, 2)
+    # c3_4 = Block((3, 3), 1, random.choice(COLOUR_LIST), 1, 2)
+    # c3.children.append(c3_1)
+    # c3.children.append(c3_2)
+    # c3.children.append(c3_3)
+    # c3.children.append(c3_4)
+    # c4 = Block((4, 4), 2, random.choice(COLOUR_LIST), 1, 2)
+    # c4_1 = Block((5, 4), 1, random.choice(COLOUR_LIST), 1, 2)
+    # c4_2 = Block((4, 4), 1, random.choice(COLOUR_LIST), 1, 2)
+    # c4_3 = Block((4, 5), 1, random.choice(COLOUR_LIST), 1, 2)
+    # c4_4 = Block((5, 5), 1, random.choice(COLOUR_LIST), 1, 2)
+    # c4.children.append(c4_1)
+    # c4.children.append(c4_2)
+    # c4.children.append(c4_3)
+    # c4.children.append(c4_4)
+    # board.children.append(c1)
+    # board.children.append(c2)
+    # board.children.append(c3)
+    # board.children.append(c4)
 
 
 # if __name__ == '__main__':
