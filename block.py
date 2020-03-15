@@ -358,7 +358,17 @@ class Block:
         Return True iff this Block's colour was changed.
         """
         # TODO: Implement me
-        return True  # FIXME
+        if self.level == self.max_depth:
+            # check if this is a leaf
+            if len(self.children) != 0:
+                return False
+            elif len(self.children) == 0:
+                if self.colour != colour:
+                    self.colour = colour
+                return True
+            else:
+                pass
+        return False
 
     def combine(self) -> bool:
         """Turn this Block into a leaf based on the majority colour of its
@@ -374,7 +384,66 @@ class Block:
         Return True iff this Block was turned into a leaf node.
         """
         # TODO: Implement me
-        return True  # FIXME
+        if self.level == self.max_depth - 1 and len(self.children) == 4:
+            # calculating majority
+            # board.children[2].children
+            # colour_list = [c.colour for c in board.children[2].children]
+
+            # COLOUR_LIST defined by instructor
+            # colour_tuple = [c.colour for c in board.children[2].children]
+            colour_tuple = [c.colour for c in self.children]
+            acc = []
+            for c in COLOUR_LIST:
+                acc.append(colour_tuple.count(c))
+
+            if max(acc) == 1:
+                return False
+            if max(acc) == 2 and acc.count(2) == 2:
+                return False
+            if max(acc) == 2 and acc.count(2) != 2:
+                colour_index = acc.index(max(acc))
+                self.colour = colour_tuple[colour_index]
+                self.children = []
+                return True
+            if max(acc) == 3:
+                colour_index = acc.index(max(acc))
+                self.colour = colour_tuple[colour_index]
+                self.children = []
+                return True
+            if max(acc) == 4:
+                colour_index = acc.index(max(acc))
+                self.colour = colour_tuple[colour_index]
+                self.children = []
+                return True
+        return False
+    # test
+    # import random
+    # random.seed(148)
+    # board = Block((2, 2), 4, None, 0, 2)
+    # c1 = Block((4, 2), 2, random.choice(COLOUR_LIST), 1, 2)
+    # c2 = Block((2, 2), 2, random.choice(COLOUR_LIST), 1, 2)
+    # c3 = Block((2, 4), 2, random.choice(COLOUR_LIST), 1, 2)
+    # c3_1 = Block((3, 2), 1, random.choice(COLOUR_LIST), 1, 2)
+    # c3_2 = Block((2, 2), 1, random.choice(COLOUR_LIST), 1, 2)
+    # c3_3 = Block((2, 3), 1, random.choice(COLOUR_LIST), 1, 2)
+    # c3_4 = Block((3, 3), 1, random.choice(COLOUR_LIST), 1, 2)
+    # c3.children.append(c3_1)
+    # c3.children.append(c3_2)
+    # c3.children.append(c3_3)
+    # c3.children.append(c3_4)
+    # c4 = Block((4, 4), 2, random.choice(COLOUR_LIST), 1, 2)
+    # c4_1 = Block((5, 4), 1, random.choice(COLOUR_LIST), 1, 2)
+    # c4_2 = Block((4, 4), 1, random.choice(COLOUR_LIST), 1, 2)
+    # c4_3 = Block((4, 5), 1, random.choice(COLOUR_LIST), 1, 2)
+    # c4_4 = Block((5, 5), 1, random.choice(COLOUR_LIST), 1, 2)
+    # c4.children.append(c4_1)
+    # c4.children.append(c4_2)
+    # c4.children.append(c4_3)
+    # c4.children.append(c4_4)
+    # board.children.append(c1)
+    # board.children.append(c2)
+    # board.children.append(c3)
+    # board.children.append(c4)
 
     def create_copy(self) -> Block:
         """Return a new Block that is a deep copy of this Block.
@@ -385,23 +454,23 @@ class Block:
         pass  # FIXME
 
 
-if __name__ == '__main__':
-    import python_ta
-    python_ta.check_all(config={
-        'allowed-import-modules': [
-            'doctest', 'python_ta', 'random', 'typing', '__future__', 'math',
-            'settings'
-        ],
-        'max-attributes': 15,
-        'max-args': 6
-    })
-
-    # This is a board consisting of only one block.
-    b1 = Block((0, 0), 750, COLOUR_LIST[0], 0, 1)
-    print("=== tiny board ===")
-    print(b1)
-
-    # Now let's make a random board.
-    b2 = generate_board(3, 750)
-    print("\n=== random board ===")
-    print(b2)
+# if __name__ == '__main__':
+#     import python_ta
+#     python_ta.check_all(config={
+#         'allowed-import-modules': [
+#             'doctest', 'python_ta', 'random', 'typing', '__future__', 'math',
+#             'settings'
+#         ],
+#         'max-attributes': 15,
+#         'max-args': 6
+#     })
+#
+#     # This is a board consisting of only one block.
+#     b1 = Block((0, 0), 750, COLOUR_LIST[0], 0, 1)
+#     print("=== tiny board ===")
+#     print(b1)
+#
+#     # Now let's make a random board.
+#     b2 = generate_board(3, 750)
+#     print("\n=== random board ===")
+#     print(b2)
