@@ -473,7 +473,6 @@ class Block:
                 copy_block.children.append(temp)
             return copy_block
 
-    # test
     # import random
     # random.seed(148)
     # board = Block((2, 2), 4, None, 0, 2)

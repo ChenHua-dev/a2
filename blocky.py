@@ -49,7 +49,47 @@ def _block_to_squares(board: Block) -> List[Tuple[Tuple[int, int, int],
     The order of the squares does not matter.
     """
     # TODO: Implement me
-    return []  # FIXME
+    # only for undivided blocks
+    if board.children == []:
+        curr_colour = board.colour
+        curr_position = board.position
+        curr_size = board.size
+        return [(curr_colour, curr_position, curr_size)]
+    else:
+        s = []
+        for child in board.children:
+            if child.colour is not None:
+                s += _block_to_squares(child)
+        return s
+
+    # import random
+    # from settings import colour_name, COLOUR_LIST
+    # random.seed(148)
+    # board = Block((2, 2), 4, None, 0, 2)
+    # c1 = Block((4, 2), 2, random.choice(COLOUR_LIST), 1, 2)
+    # c2 = Block((2, 2), 2, random.choice(COLOUR_LIST), 1, 2)
+    # c3 = Block((2, 4), 2, random.choice(COLOUR_LIST), 1, 2)
+    # c3_1 = Block((3, 2), 1, random.choice(COLOUR_LIST), 1, 2)
+    # c3_2 = Block((2, 2), 1, random.choice(COLOUR_LIST), 1, 2)
+    # c3_3 = Block((2, 3), 1, random.choice(COLOUR_LIST), 1, 2)
+    # c3_4 = Block((3, 3), 1, random.choice(COLOUR_LIST), 1, 2)
+    # c3.children.append(c3_1)
+    # c3.children.append(c3_2)
+    # c3.children.append(c3_3)
+    # c3.children.append(c3_4)
+    # c4 = Block((4, 4), 2, random.choice(COLOUR_LIST), 1, 2)
+    # c4_1 = Block((5, 4), 1, random.choice(COLOUR_LIST), 1, 2)
+    # c4_2 = Block((4, 4), 1, random.choice(COLOUR_LIST), 1, 2)
+    # c4_3 = Block((4, 5), 1, random.choice(COLOUR_LIST), 1, 2)
+    # c4_4 = Block((5, 5), 1, random.choice(COLOUR_LIST), 1, 2)
+    # c4.children.append(c4_1)
+    # c4.children.append(c4_2)
+    # c4.children.append(c4_3)
+    # c4.children.append(c4_4)
+    # board.children.append(c1)
+    # board.children.append(c2)
+    # board.children.append(c3)
+    # board.children.append(c4)
 
 
 class GameData:
@@ -359,14 +399,14 @@ class GameOverState(GameState):
         renderer.print(f'Player {self._winner} wins!', x, y)
 
 
-if __name__ == '__main__':
-    import python_ta
-
-    python_ta.check_all(config={
-        'allowed-io': ['run_game'],
-        'allowed-import-modules': [
-            'doctest', 'python_ta', 'random', 'typing', 'pygame', '__future__',
-            'block', 'player', 'renderer', 'settings', 'actions'
-        ],
-        'generated-members': 'pygame.*'
-    })
+# if __name__ == '__main__':
+#     import python_ta
+#
+#     python_ta.check_all(config={
+#         'allowed-io': ['run_game'],
+#         'allowed-import-modules': [
+#             'doctest', 'python_ta', 'random', 'typing', 'pygame', '__future__',
+#             'block', 'player', 'renderer', 'settings', 'actions'
+#         ],
+#         'generated-members': 'pygame.*'
+#     })
