@@ -28,6 +28,8 @@ from typing import List, Tuple
 from block import Block
 from settings import colour_name, COLOUR_LIST
 
+# COLOUR_LIST = [PACIFIC_POINT, REAL_RED, OLD_OLIVE, DAFFODIL_DELIGHT]
+
 
 def generate_goals(num_goals: int) -> List[Goal]:
     """Return a randomly generated list of goals with length num_goals.
@@ -40,7 +42,29 @@ def generate_goals(num_goals: int) -> List[Goal]:
         - num_goals <= len(COLOUR_LIST)
     """
     # TODO: Implement Me
-    return [PerimeterGoal(COLOUR_LIST[0])]  # FIXME
+    # Choosing between Perimeter and Blob goal
+    # 0 represents PerimeterGoal; 1 represents BlobGoal
+    rn = random.randint(0, 1)
+
+    length_colour_list = len(COLOUR_LIST)
+    index_list = list(range(0, length_colour_list))
+
+    if rn == 0:
+        s = []
+        for _ in range(num_goals):
+            temp = random.choice(index_list)
+            s.append(PerimeterGoal(COLOUR_LIST[temp]))
+            index_list.remove(temp)
+        return s
+    elif rn == 1:
+        s = []
+        for _ in range(num_goals):
+            temp = random.choice(index_list)
+            s.append(BlobGoal(COLOUR_LIST[temp]))
+            index_list.remove(temp)
+        return s
+    else:
+        pass
 
 
 def _flatten(block: Block) -> List[List[Tuple[int, int, int]]]:
@@ -58,7 +82,69 @@ def _flatten(block: Block) -> List[List[Tuple[int, int, int]]]:
     L[0][0] represents the unit cell in the upper left corner of the Block.
     """
     # TODO: Implement me
-    return []  # FIXME
+    # Base case: when there is no children
+    if block.children == []:
+        lst = []
+        for _ in range(2 ** (block.max_depth - block.level)):
+            column = []
+            for _ in range(2 ** (block.max_depth - block.level)):
+                column.append(block.colour)
+            lst.append(column)
+        return lst
+    # Recursive case: where there are children under tree node (internal node)
+    else:
+        # List for return in the recursive case
+        acc = []
+        for _ in range(2 ** (block.max_depth - block.level)):
+            column = []
+            for _ in range(2 ** (block.max_depth - block.level)):
+                column.append(None)
+            acc.append(column)
+
+        child_size = (2 ** (block.max_depth - block.level)) // 2
+
+        # Gather flattened block from child 0
+        flattened_child_0 = _flatten(block.children[0])
+        for i in range(child_size):
+            for j in range(child_size):
+                acc[i + child_size][j] = flattened_child_0[i][j]
+
+        # Gather flattened block from child 1
+        flattened_child_1 = _flatten(block.children[1])
+        for i in range(child_size):
+            for j in range(child_size):
+                acc[i][j] = flattened_child_1[i][j]
+
+        # Gather flattened block from child 2
+        flattened_child_2 = _flatten(block.children[2])
+        for i in range(child_size):
+            for j in range(child_size):
+                acc[i][j + child_size] = flattened_child_2[i][j]
+
+        # Gather flattened block from child 3
+        flattened_child_3 = _flatten(block.children[3])
+        for i in range(child_size):
+            for j in range(child_size):
+                acc[i + child_size][j + child_size] = flattened_child_3[i][j]
+
+        return acc
+
+    # board = Block((0, 0), 750, None, 0, 2)
+    #
+    # # Level 1
+    # colours = [None, COLOUR_LIST[2], COLOUR_LIST[1], COLOUR_LIST[3]]
+    # set_children(board, colours)
+    #
+    # # Level 2
+    # colours = [COLOUR_LIST[0], COLOUR_LIST[1], COLOUR_LIST[1], COLOUR_LIST[3]]
+    # set_children(board.children[0], colours)
+    #
+    # [
+    #     [COLOUR_LIST[2], COLOUR_LIST[2], COLOUR_LIST[1], COLOUR_LIST[1]],
+    #     [COLOUR_LIST[2], COLOUR_LIST[2], COLOUR_LIST[1], COLOUR_LIST[1]],
+    #     [COLOUR_LIST[1], COLOUR_LIST[1], COLOUR_LIST[3], COLOUR_LIST[3]],
+    #     [COLOUR_LIST[0], COLOUR_LIST[3], COLOUR_LIST[3], COLOUR_LIST[3]]
+    # ]
 
 
 class Goal:
@@ -134,12 +220,12 @@ class BlobGoal(Goal):
         return 'DESCRIPTION'  # FIXME
 
 
-if __name__ == '__main__':
-    import python_ta
-    python_ta.check_all(config={
-        'allowed-import-modules': [
-            'doctest', 'python_ta', 'random', 'typing', 'block', 'settings',
-            'math', '__future__'
-        ],
-        'max-attributes': 15
-    })
+# if __name__ == '__main__':
+#     import python_ta
+#     python_ta.check_all(config={
+#         'allowed-import-modules': [
+#             'doctest', 'python_ta', 'random', 'typing', 'block', 'settings',
+#             'math', '__future__'
+#         ],
+#         'max-attributes': 15
+#     })

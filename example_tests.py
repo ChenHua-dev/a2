@@ -134,6 +134,13 @@ def flattened_board_16x16() -> List[List[Tuple[int, int, int]]]:
         [COLOUR_LIST[0], COLOUR_LIST[3], COLOUR_LIST[3], COLOUR_LIST[3]]
     ]
 
+# li = []
+# for l in lst:
+#     ll = []
+#     for t in l:
+#         ll.append(colour_name(t))
+#     li.append(ll)
+
 
 def test_block_to_squares_leaf(child_block) -> None:
     """Test that a board with only one block can be correctly trasnlated into
@@ -329,5 +336,5 @@ class TestGoal:
             assert goal.score(board_16x16) == expected
 
 
-if __name__ == '__main__':
-    pytest.main(['example_tests.py'])
+# if __name__ == '__main__':
+#     pytest.main(['example_tests.py'])
