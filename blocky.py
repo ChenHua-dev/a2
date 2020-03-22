@@ -49,7 +49,6 @@ def _block_to_squares(board: Block) -> List[Tuple[Tuple[int, int, int],
     The order of the squares does not matter.
     """
     # TODO: Implement me
-    # only for undivided blocks
     if board.children == []:
         curr_colour = board.colour
         curr_position = board.position
@@ -58,38 +57,10 @@ def _block_to_squares(board: Block) -> List[Tuple[Tuple[int, int, int],
     else:
         s = []
         for child in board.children:
-            if child.colour is not None:
-                s += _block_to_squares(child)
+            # if child:
+            # if child.colour is not None:  # why this is wrong
+            s += _block_to_squares(child)
         return s
-
-    # import random
-    # from settings import colour_name, COLOUR_LIST
-    # random.seed(148)
-    # board = Block((2, 2), 4, None, 0, 2)
-    # c1 = Block((4, 2), 2, random.choice(COLOUR_LIST), 1, 2)
-    # c2 = Block((2, 2), 2, random.choice(COLOUR_LIST), 1, 2)
-    # c3 = Block((2, 4), 2, random.choice(COLOUR_LIST), 1, 2)
-    # c3_1 = Block((3, 2), 1, random.choice(COLOUR_LIST), 1, 2)
-    # c3_2 = Block((2, 2), 1, random.choice(COLOUR_LIST), 1, 2)
-    # c3_3 = Block((2, 3), 1, random.choice(COLOUR_LIST), 1, 2)
-    # c3_4 = Block((3, 3), 1, random.choice(COLOUR_LIST), 1, 2)
-    # c3.children.append(c3_1)
-    # c3.children.append(c3_2)
-    # c3.children.append(c3_3)
-    # c3.children.append(c3_4)
-    # c4 = Block((4, 4), 2, random.choice(COLOUR_LIST), 1, 2)
-    # c4_1 = Block((5, 4), 1, random.choice(COLOUR_LIST), 1, 2)
-    # c4_2 = Block((4, 4), 1, random.choice(COLOUR_LIST), 1, 2)
-    # c4_3 = Block((4, 5), 1, random.choice(COLOUR_LIST), 1, 2)
-    # c4_4 = Block((5, 5), 1, random.choice(COLOUR_LIST), 1, 2)
-    # c4.children.append(c4_1)
-    # c4.children.append(c4_2)
-    # c4.children.append(c4_3)
-    # c4.children.append(c4_4)
-    # board.children.append(c1)
-    # board.children.append(c2)
-    # board.children.append(c3)
-    # board.children.append(c4)
 
 
 class GameData:

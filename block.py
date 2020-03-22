@@ -188,30 +188,52 @@ class Block:
         Block.
         """
         # TODO: Implement me
-        origin_x = self.position[0]
-        origin_y = self.position[1]
-
-        dx = position[0] - origin_x
-        dy = position[1] - origin_y
-
-        # 1. Set the position of this Block to <position>
-        self.position = position
-
-        # 2. Update all its descendants to have position consistent with this
-        #    Block's
-        # FIXME: FIXED
-        if len(self.children) == 0:
-            return None
-        elif len(self.children) == 4:
-
-            for child in self.children:
-                child_position = child.position
-                new_child_x = child_position[0] + dx
-                new_child_y = child_position[1] + dy
-                new_child_position = (new_child_x, new_child_y)
-                child._update_children_positions(new_child_position)
+        dx = position[0] - self.position[0]
+        dy = position[1] - self.position[1]
+        if len(self.children) <= 0:
+            # 1. Set the position of this Block to <position>
+            self.position = position
         else:
-            pass
+            child_position = self._children_positions()
+            # 1. Set the position of this Block to <position>
+            self.position = position
+            # 2. Update all descendants to have position consistent with this
+            #    Block's
+            for i in range(len(self.children)):
+                new_child_x = child_position[i][0] + dx
+                new_child_y = child_position[i][1] + dy
+                new_child_position = (new_child_x, new_child_y)
+                self.children[i]._update_children_positions(new_child_position)
+        # self.position = position
+        # # find out the current level child size in order to calculate
+        # child_size = self._child_size()
+        #
+        # if len(self.children) <= 0:
+        #     return None
+        # else:
+        #     # Update children at index 0
+        #     new_child_0_x = position[0] + child_size
+        #     new_child_0_y = position[1]
+        #     new_child_0_position = (new_child_0_x, new_child_0_y)
+        #     self.children[0]._update_children_positions(new_child_0_position)
+        #
+        #     # Update children at index 1
+        #     new_child_1_x = position[0]
+        #     new_child_1_y = position[1]
+        #     new_child_1_position = (new_child_1_x, new_child_1_y)
+        #     self.children[1]._update_children_positions(new_child_1_position)
+        #
+        #     # Update children at index 2
+        #     new_child_2_x = position[0]
+        #     new_child_2_y = position[1] + child_size
+        #     new_child_2_position = (new_child_2_x, new_child_2_y)
+        #     self.children[2]._update_children_positions(new_child_2_position)
+        #
+        #     # Update children at index 3
+        #     new_child_3_x = position[0] + child_size
+        #     new_child_3_y = position[1] + child_size
+        #     new_child_3_position = (new_child_3_x, new_child_3_y)
+        #     self.children[3]._update_children_positions(new_child_3_position)
 
     def smashable(self) -> bool:
         """Return True iff this block can be smashed.
@@ -220,6 +242,37 @@ class Block:
         max_depth.
         """
         return self.level != self.max_depth and len(self.children) == 0
+
+    def _smash_helper(self, level: int, max_depth: int) -> Block:
+        """Return a Block instance that is randomly-generated with the given
+        <level> and <max_depth>
+
+         Subdivided further to the maximum depth:
+            if random.random() < math.exp(-0.25 * level).
+            else create generated block colour with random.choice(COLOUR_LIST)
+        """
+        # when level < max_depth
+        if level < max_depth:
+            rn = random.random()
+            block = Block((0, 0), 0, None, level, max_depth)
+            # subdivide further
+            if rn < math.exp(-0.25 * level):
+                child_0 = self._smash_helper(level + 1, max_depth)
+                child_1 = self._smash_helper(level + 1, max_depth)
+                child_2 = self._smash_helper(level + 1, max_depth)
+                child_3 = self._smash_helper(level + 1, max_depth)
+                block.children.extend([child_0, child_1, child_2, child_3])
+                # _update_children_positions will be used in Block.smash()
+            else:
+                block.colour = random.choice(COLOUR_LIST)
+            return block
+        # when level < max_depth
+        elif level == max_depth:
+            block = Block((0, 0), 0, None, level, max_depth)
+            block.colour = random.choice(COLOUR_LIST)
+            return block
+        else:
+            pass
 
     def smash(self) -> bool:
         """Sub-divide this block so that it has four randomly generated
@@ -231,38 +284,65 @@ class Block:
         Return True iff the smash was performed.
         """
         # TODO: Implement me
-        # If this Block's level is <max_depth>, do nothing.
-        # If this block has children, do nothing.
-        # FIXME: FIXED
-        if self.smashable():
-
+        if self.smashable():  # Block is not yet at its max depth
             # 1. when smashing, turn this block colour off
             self.colour = None
 
-            # 2. extract the positions for its children
-            children_positions = self._children_positions()
-
-            # 3. create children
-            children_size = self._child_size()  # int(self.size / 2)
+            # 2. children level
             children_level = self.level + 1
 
-            c0 = Block(children_positions[0], children_size,
-                       random.choice(COLOUR_LIST), children_level,
-                       self.max_depth)
-            c1 = Block(children_positions[1], children_size,
-                       random.choice(COLOUR_LIST), children_level,
-                       self.max_depth)
-            c2 = Block(children_positions[2], children_size,
-                       random.choice(COLOUR_LIST), children_level,
-                       self.max_depth)
-            c3 = Block(children_positions[3], children_size,
-                       random.choice(COLOUR_LIST), children_level,
-                       self.max_depth)
+            # 3. maximum depth for sub-blocks within this block
+            max_depth = self.max_depth
 
-            self.children.extend([c0, c1, c2, c3])
+            # 4. appending children blocks
+            child_0 = self._smash_helper(children_level, max_depth)
+            child_1 = self._smash_helper(children_level, max_depth)
+            child_2 = self._smash_helper(children_level, max_depth)
+            child_3 = self._smash_helper(children_level, max_depth)
+            self.children.extend([child_0, child_1, child_2, child_3])
+            self._update_children_positions(self.position)
+
             return True
         else:
             return False
+        # if self.smashable():
+        #     for _ in range(4):
+        #         self.children.append(_smash_helper(self.level + 1, self.max_depth))
+        #     self._update_children_positions(self.position)
+        #     return True
+        # else:
+        #     return False
+        # If this Block's level is <max_depth>, do nothing.
+        # If this block has children, do nothing.
+        # if self.smashable():
+        #
+        #     # 1. when smashing, turn this block colour off
+        #     self.colour = None
+        #
+        #     # 2. extract the positions for its children
+        #     children_positions = self._children_positions()
+        #
+        #     # 3. create children
+        #     children_size = self._child_size()  # int(self.size / 2)
+        #     children_level = self.level + 1
+        #
+        #     c0 = Block(children_positions[0], children_size,
+        #                random.choice(COLOUR_LIST), children_level,
+        #                self.max_depth)
+        #     c1 = Block(children_positions[1], children_size,
+        #                random.choice(COLOUR_LIST), children_level,
+        #                self.max_depth)
+        #     c2 = Block(children_positions[2], children_size,
+        #                random.choice(COLOUR_LIST), children_level,
+        #                self.max_depth)
+        #     c3 = Block(children_positions[3], children_size,
+        #                random.choice(COLOUR_LIST), children_level,
+        #                self.max_depth)
+        #
+        #     self.children.extend([c0, c1, c2, c3])
+        #     return True
+        # else:
+        #     return False
 
     def swap(self, direction: int) -> bool:
         """Swap the child Blocks of this Block.
@@ -275,26 +355,31 @@ class Block:
         Precondition: <direction> is either 0 or 1
         """
         # TODO: Implement me
-        # FIXME: FIXED
-        if len(self.children) == 0:
-            return True
-        elif len(self.children) == 4:
-            children_positions = self._children_positions()[:]
+        if len(self.children) == 4:
+            # Record Block objects for 4 children
+            child_0 = self.children[0]
+            child_1 = self.children[1]
+            child_2 = self.children[2]
+            child_3 = self.children[3]
+            while len(self.children) > 0:
+                self.children.pop()
             # vertical-swap
             if direction == 1:
-                self.children[0].position = children_positions[1]
-                self.children[1].position = children_positions[0]
-                self.children[2].position = children_positions[3]
-                self.children[3].position = children_positions[2]
+                self.children.append(child_3)
+                self.children.append(child_2)
+                self.children.append(child_1)
+                self.children.append(child_0)
             # horizontal-swap
             elif direction == 0:
-                self.children[0].position = children_positions[3]
-                self.children[1].position = children_positions[2]
-                self.children[2].position = children_positions[1]
-                self.children[3].position = children_positions[0]
+                self.children.append(child_1)
+                self.children.append(child_0)
+                self.children.append(child_3)
+                self.children.append(child_2)
+            # Update children positions
+            self._update_children_positions(self.position)
             return True
         else:
-            pass
+            return False
 
     def rotate(self, direction: int) -> bool:
         """Rotate this Block and all its descendants.
@@ -314,20 +399,14 @@ class Block:
                 return False
             # Recursive case
             else:
-                children_positions = [self.children[0].position,
-                                      self.children[1].position,
-                                      self.children[2].position,
-                                      self.children[3].position]
-
-                self.children[0].position = children_positions[3]
-                self.children[1].position = children_positions[0]
-                self.children[2].position = children_positions[1]
-                self.children[3].position = children_positions[2]
-
+                # Getting first child
+                child_0 = self.children.pop(0)
+                self.children.append(child_0)
+                # Update children positions
+                self._update_children_positions(self.position)
                 for child in self.children:
                     child.rotate(direction)
                 return True
-
         # Counter-clockwise rotation
         elif direction == 3:
             # Base case
@@ -335,21 +414,14 @@ class Block:
                 return False
             # Recursive case
             else:
-                children_positions = [self.children[0].position,
-                                      self.children[1].position,
-                                      self.children[2].position,
-                                      self.children[3].position]
-
-                self.children[0].position = children_positions[1]
-                self.children[1].position = children_positions[2]
-                self.children[2].position = children_positions[3]
-                self.children[3].position = children_positions[0]
-
+                # Getting last child
+                child_3 = self.children.pop()
+                self.children.insert(0, child_3)
+                # Update children positions
+                self._update_children_positions(self.position)
                 for child in self.children:
                     child.rotate(direction)
                 return True
-        else:
-            pass
 
     def paint(self, colour: Tuple[int, int, int]) -> bool:
         """Change this Block's colour iff it is a leaf at a level of max_depth
