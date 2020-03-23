@@ -65,6 +65,7 @@ def colour_name(colour: Tuple[int, int, int]) -> str:
     >>> colour_name(PACIFIC_POINT)
     'Pacific Point'
     """
+
     colour_names = {
         PACIFIC_POINT: 'Pacific Point',
         REAL_RED: 'Real Red',

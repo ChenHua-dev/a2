@@ -23,11 +23,13 @@ This file contains the different game states for the Blocky game.
 """
 
 from __future__ import annotations
-from typing import Dict, List, Optional, Tuple
-import pygame
 
-from actions import ACTION_MESSAGE, ROTATE_CLOCKWISE, ROTATE_COUNTER_CLOCKWISE,\
-    SWAP_HORIZONTAL, SWAP_VERTICAL, SMASH, PASS, PAINT, COMBINE, ACTION_PENALTY
+from typing import Dict, List, Optional, Tuple
+
+import pygame
+from actions import ACTION_MESSAGE, ACTION_PENALTY, COMBINE, PAINT, PASS, \
+    ROTATE_CLOCKWISE, ROTATE_COUNTER_CLOCKWISE, SMASH, SWAP_HORIZONTAL, \
+    SWAP_VERTICAL
 from block import Block
 from player import Player
 from renderer import Renderer
@@ -48,8 +50,13 @@ def _block_to_squares(board: Block) -> List[Tuple[Tuple[int, int, int],
 
     The order of the squares does not matter.
     """
-    # TODO: Implement me
-    return []  # FIXME
+    if not board.children:
+        return [(board.colour, board.position, board.size)]
+    else:
+        result = []
+        for children in board.children:
+            result.extend(_block_to_squares(children))
+        return result
 
 
 class GameData:
@@ -109,8 +116,8 @@ class GameData:
         goal_score = self.players[player_id].goal.score(self.board)
 
         penalty = self.smashes[player_id] * ACTION_PENALTY[SMASH] + \
-                  self.combines[player_id] * ACTION_PENALTY[COMBINE] + \
-                  self.paints[player_id] * ACTION_PENALTY[PAINT]
+                      self.combines[player_id] * ACTION_PENALTY[COMBINE] + \
+                      self.paints[player_id] * ACTION_PENALTY[PAINT]
 
         return goal_score, penalty
 

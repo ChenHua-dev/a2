@@ -22,11 +22,11 @@ Misha Schwartz, and Jaisie Sin
 This file contains the Block class, the main data structure used in the game.
 """
 from __future__ import annotations
-from typing import Optional, Tuple, List
-import random
-import math
 
-from settings import colour_name, COLOUR_LIST
+import random
+from typing import List, Optional, Tuple
+
+from settings import COLOUR_LIST, colour_name
 
 
 def generate_board(max_depth: int, size: int) -> Block:
@@ -187,9 +187,11 @@ class Block:
         <position> is the (x, y) coordinates of the upper-left corner of this
         Block.
         """
-        # TODO
-        asdjsakda 
-        return  # FIXME
+        self.position = position
+        if not self.children:
+            get_children_positions = self._children_positions()
+            for i in range(len(self.children)):
+                self.children[i].position = get_children_positions[i]
 
     def smashable(self) -> bool:
         """Return True iff this block can be smashed.
@@ -208,8 +210,21 @@ class Block:
 
         Return True iff the smash was performed.
         """
-        # TODO: Implement me
-        return True  # FIXME
+        if self.smashable():
+            get_positions = self._children_positions()
+            get_size = self._child_size()
+            get_colors = [random.choice(COLOUR_LIST),
+                          random.choice(COLOUR_LIST),
+                          random.choice(COLOUR_LIST),
+                          random.choice(COLOUR_LIST)]
+            self.colour = None
+            get_level = self.level + 1
+            for i in range(4):
+                self.children.append(
+                    Block(get_positions[i], get_size, get_colors[i], get_level,
+                          self.max_depth))
+            return True
+        return False
 
     def swap(self, direction: int) -> bool:
         """Swap the child Blocks of this Block.
@@ -221,8 +236,36 @@ class Block:
 
         Precondition: <direction> is either 0 or 1
         """
-        # TODO: Implement me
-        return True  # FIXME
+        if not self.children:
+            return False
+        else:
+            self._swap_position(direction)
+            return True
+
+    def _swap_position(self, direction: int) -> None:
+        """Swap the Block and all the descendents in this Block in <size_move>
+        horizontally or vertically based on <direction>
+
+        """
+        if not self.children:
+            pass
+        else:
+            child0 = self.children[0]
+            child1 = self.children[1]
+            child2 = self.children[2]
+            child3 = self.children[3]
+            if direction == 0:
+                child1.position, child0.position, child3.position, \
+                child2.position = child0.position, child1.position, \
+                                  child2.position, child3.position
+                self.children = [child1, child0, child3, child2]
+            else:
+                child3.position, child2.position, child1.position, \
+                child0.position = child0.position, child1.position, \
+                                  child2.position, child3.position
+                self.children = [child3, child2, child1, child0]
+            for child in self.children:
+                child._update_children_positions(child.position)
 
     def rotate(self, direction: int) -> bool:
         """Rotate this Block and all its descendants.
@@ -234,8 +277,34 @@ class Block:
 
         Precondition: <direction> is either 1 or 3.
         """
-        # TODO: Implement me
-        return True  # FIXME
+        if not self.children:
+            return False
+        else:
+            self._rotate_self(direction)
+            for child in self.children:
+                child.rotate(direction)
+        return True
+
+    def _rotate_self(self, direction: int) -> None:
+        """Rotate the block by its own with four children; or do nothing if
+        the Block has no children"""
+        if not self.children:
+            pass
+        else:
+            child0 = self.children[0]
+            child1 = self.children[1]
+            child2 = self.children[2]
+            child3 = self.children[3]
+            if direction == 3:
+                child0.position, child1.position, child2.position, \
+                child3.position = child3.position, child0.position, \
+                                  child1.position, child2.position
+                self.children = [child3, child0, child1, child2]
+            else:
+                child0.position, child1.position, child2.position, \
+                child3.position = child1.position, child2.position, \
+                                  child3.position, child0.position
+                self.children = [child1, child2, child3, child0]
 
     def paint(self, colour: Tuple[int, int, int]) -> bool:
         """Change this Block's colour iff it is a leaf at a level of max_depth
@@ -243,8 +312,11 @@ class Block:
 
         Return True iff this Block's colour was changed.
         """
-        # TODO: Implement me
-        return True  # FIXME
+        if not self.children and self.level == self.max_depth \
+                and self.colour != colour:
+            self.colour = colour
+            return True
+        return False
 
     def combine(self) -> bool:
         """Turn this Block into a leaf based on the majority colour of its
@@ -259,20 +331,76 @@ class Block:
 
         Return True iff this Block was turned into a leaf node.
         """
-        # TODO: Implement me
-        return True  # FIXME
+        majority_color = self._get_majority_color()
+        if majority_color is None or (self.level == self.max_depth - 1) or \
+                not self.children:
+            return False
+        else:
+            self.children = []
+            self.colour = majority_color
+            self.level = self.level - 1
+            self.size = self.size * 2
+        return True
+
+    def _get_colour_lst(self) -> List[Tuple[int, int, int]]:
+        """Return a list of colour of leaves (duplicate) for this block
+        """
+        if not self.children:
+            return []
+        else:
+            result = []
+            for child in self.children:
+                if not child.children:
+                    result.append(child.colour)
+                else:
+                    result.extend(child._get_colour_lst())
+            return result
+
+    def _get_majority_color(self) -> Optional[Tuple[int, int, int]]:
+        """Return the majority colour for this Block or None if there is no
+        such majority colour
+        """
+        colour_lst = self._get_colour_lst()
+        if not colour_lst:
+            return None
+
+        color_count = {}
+        for color in colour_lst:
+            if color in color_count:
+                color_count[color] += 1
+            else:
+                color_count[color] = 1
+        values = list(color_count.values())
+        max_value = max(values)
+        if values.count(max_value) > 1:
+            return None
+        else:
+            for col in color_count:
+                if color_count[col] == max_value:
+                    return col
+        return None
 
     def create_copy(self) -> Block:
         """Return a new Block that is a deep copy of this Block.
 
         Remember that a deep copy has new blocks (not aliases) at every level.
         """
-        # TODO: Implement me
-        pass  # FIXME
+        if not self.children:
+            return Block(self.position, self.size, self.colour,
+                         self.level, self.max_depth)
+        else:
+            copy_block = Block(self.position, self.size, self.colour,
+                               self.level, self.max_depth)
+            children_lst = []
+            for child in self.children:
+                children_lst.append(child.create_copy())
+            copy_block.children = children_lst
+            return copy_block
 
 
 if __name__ == '__main__':
     import python_ta
+
     python_ta.check_all(config={
         'allowed-import-modules': [
             'doctest', 'python_ta', 'random', 'typing', '__future__', 'math',

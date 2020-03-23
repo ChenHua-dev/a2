@@ -22,11 +22,12 @@ Misha Schwartz, and Jaisie Sin
 This file contains the hierarchy of Goal classes.
 """
 from __future__ import annotations
-import math
+
 import random
-from typing import List, Tuple
+from typing import Dict, List, Tuple
+
 from block import Block
-from settings import colour_name, COLOUR_LIST
+from settings import COLOUR_LIST
 
 
 def generate_goals(num_goals: int) -> List[Goal]:
@@ -39,8 +40,12 @@ def generate_goals(num_goals: int) -> List[Goal]:
     Precondition:
         - num_goals <= len(COLOUR_LIST)
     """
-    # TODO: Implement Me
-    return [PerimeterGoal(COLOUR_LIST[0])]  # FIXME
+    num_choose = random.randint(1, 2)
+    if num_choose == 1:
+        return [PerimeterGoal(random.choice(COLOUR_LIST)) for _ in
+                range(num_goals)]
+    else:
+        return [BlobGoal(random.choice(COLOUR_LIST)) for _ in range(num_goals)]
 
 
 def _flatten(block: Block) -> List[List[Tuple[int, int, int]]]:
@@ -57,8 +62,71 @@ def _flatten(block: Block) -> List[List[Tuple[int, int, int]]]:
 
     L[0][0] represents the unit cell in the upper left corner of the Block.
     """
-    # TODO: Implement me
-    return []  # FIXME
+    new_copy = block.create_copy()
+    final_block = _get_block_to_max_depth(new_copy)
+    p2c = _get_positions_and_color_of_leaves(final_block)
+    positions = list(p2c.keys())
+    x_values = list(set([position[0] for position in positions]))
+    y_values = list(set([position[1] for position in positions]))
+    x_values.sort()
+    y_values.sort()
+    result = []
+    for x in x_values:
+        x_lst = []
+        for y in y_values:
+            x_lst.append(p2c[(x, y)])
+        result.append(x_lst)
+    return result
+
+
+def _get_block_to_max_depth(block: Block) -> Block:
+    """Return a Block that makes all colored blocks in the original blocks
+    to a level of block.max_depth. That is, if a block is not at max_depth,
+    smash it into children with 4 same color as the original block"""
+    if not block.children and block.level < block.max_depth:
+        target_color = block.colour
+        block.smash()
+        for child in block.children:
+            child.colour = target_color
+        return block
+    else:
+        block.children = [_get_block_to_max_depth(child)
+                          for child in block.children]
+        return block
+
+
+def _get_positions_and_color_of_leaves(block: Block) -> Dict[
+        Tuple[int, int], Tuple[int, int, int]]:
+    """Return a dictionary that get map to the positions of all leaves of the
+    block to its corresponding colour. The key is the position of the block as
+    a (int, int) tuple while the value is the corresponding
+    colour of this block
+    """
+    if not block.children:
+        return {block.position: block.colour}
+    else:
+        result = {}
+        for child in block.children:
+            new_dict = _get_positions_and_color_of_leaves(child)
+            for key in new_dict:
+                result[key] = new_dict[key]
+        return result
+
+
+def _get_position_block(block: Block) -> Dict[Tuple[int, int], Block]:
+    """ Return a dictionary that maps the positions of all colored blocks in
+    <block> to the related block. The key is the position tuple and the value is
+    the related block
+    """
+    if not block.children:
+        return {block.position: block}
+    else:
+        result = {}
+        for child in block.children:
+            to_add = _get_position_block(child)
+            for key in to_add:
+                result[key] = to_add[key]
+        return result
 
 
 class Goal:
@@ -136,6 +204,7 @@ class BlobGoal(Goal):
 
 if __name__ == '__main__':
     import python_ta
+
     python_ta.check_all(config={
         'allowed-import-modules': [
             'doctest', 'python_ta', 'random', 'typing', 'block', 'settings',
@@ -143,3 +212,4 @@ if __name__ == '__main__':
         ],
         'max-attributes': 15
     })
+
