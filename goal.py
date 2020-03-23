@@ -94,6 +94,7 @@ def _flatten(block: Block) -> List[List[Tuple[int, int, int]]]:
     # Recursive case: where there are children under tree node (internal node)
     else:
         # List for return in the recursive case
+        # Parent block
         acc = []
         for _ in range(2 ** (block.max_depth - block.level)):
             column = []
@@ -102,7 +103,6 @@ def _flatten(block: Block) -> List[List[Tuple[int, int, int]]]:
             acc.append(column)
 
         child_size = (2 ** (block.max_depth - block.level)) // 2
-
         # Gather flattened block from child 0
         flattened_child_0 = _flatten(block.children[0])
         for i in range(child_size):
@@ -128,7 +128,6 @@ def _flatten(block: Block) -> List[List[Tuple[int, int, int]]]:
                 acc[i + child_size][j + child_size] = flattened_child_3[i][j]
 
         return acc
-
     # board = Block((0, 0), 750, None, 0, 2)
     #
     # # Level 1
@@ -180,24 +179,63 @@ class Goal:
 class PerimeterGoal(Goal):
     def score(self, board: Block) -> int:
         # TODO: Implement me
-        return 148  # FIXME
+        s = 0
+        flat_board = _flatten(board)
+        board_size = len(flat_board)
+        for i in range(board_size):
+            # score upper
+            if flat_board[i][0] == self.colour:
+                s += 1
+            # score lower
+            if flat_board[i][-1] == self.colour:
+                s += 1
+            # score left
+            if flat_board[0][i] == self.colour:
+                s += 1
+            # score right
+            if flat_board[-1][i] == self.colour:
+                s += 1
+        return s
 
     def description(self) -> str:
         # TODO: Implement me
-        return 'DESCRIPTION'  # FIXME
+        return 'Player creates the largest possible ' \
+               'perimeter of the board using the target colour'
 
 
 class BlobGoal(Goal):
     def score(self, board: Block) -> int:
         # TODO: Implement me
-        return 148  # FIXME
+        # flattening the tree/block
+        flat_board = _flatten(board)
+        col_size = len(flat_board)
+        row_size = len(flat_board)
+
+        matrix = []
+        for _ in range(col_size):
+            column = []
+            for _ in range(row_size):
+                column.append(-1)
+            matrix.append(column)
+
+        # s = []
+        max_score = None
+        for i in range(col_size):
+            for j in range(row_size):
+                pos = (i, j)
+                temp = self._undiscovered_blob_size(pos, flat_board, matrix)
+                # s.append(temp)
+                if max_score is None or max_score < temp:
+                    max_score = temp
+        return max_score  # max(s)
 
     def _undiscovered_blob_size(self, pos: Tuple[int, int],
                                 board: List[List[Tuple[int, int, int]]],
                                 visited: List[List[int]]) -> int:
-        """Return the size of the largest connected blob that (a) is of this
-        Goal's target colour, (b) includes the cell at <pos>, and (c) involves
-        only cells that have never been visited.
+        """Return the size of the largest connected blob that
+            (a) is of this Goal's target colour
+            (b) includes the cell at <pos>
+            (c) involves only cells that have never been visited
 
         If <pos> is out of bounds for <board>, return 0.
 
@@ -213,11 +251,35 @@ class BlobGoal(Goal):
         either 0 or 1.
         """
         # TODO: Implement me
-        pass  # FIXME
+        i = pos[0]
+        j = pos[1]
+        board_size = len(board)
+
+        # out of bound
+        if not (0 <= i < board_size and 0 <= j < board_size):
+            return 0
+        if visited[i][j] == 0 or visited[i][j] == 1:
+            return 0
+        else: # within bound and the current cell hasn't been visited
+            # if current cell's colour is not the same as target colour
+            if board[i][j] != self.colour:
+                visited[i][j] = 0
+                return 0
+            # if current cell's colour is the same as target colour
+            else:
+                visited[i][j] = 1
+                acc = 1
+                # upper, lower, left, right connected unit cells, respectively
+                acc += self._undiscovered_blob_size((i-1, j), board, visited)
+                acc += self._undiscovered_blob_size((i+1, j), board, visited)
+                acc += self._undiscovered_blob_size((i, j-1), board, visited)
+                acc += self._undiscovered_blob_size((i, j+1), board, visited)
+                return acc
 
     def description(self) -> str:
         # TODO: Implement me
-        return 'DESCRIPTION'  # FIXME
+        return 'Player creates the largest possible ' \
+               'blob of blocks using the target colour'
 
 
 # if __name__ == '__main__':
