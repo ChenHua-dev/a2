@@ -22,15 +22,14 @@ Misha Schwartz, and Jaisie Sin.
 This file contains the hierarchy of player classes.
 """
 from __future__ import annotations
-from typing import List, Optional, Tuple
-import random
-import pygame
 
+import random
+from typing import List, Optional, Tuple
+
+import pygame
+from actions import KEY_ACTION
 from block import Block
 from goal import Goal, generate_goals
-
-from actions import KEY_ACTION, ROTATE_CLOCKWISE, ROTATE_COUNTER_CLOCKWISE, \
-    SWAP_HORIZONTAL, SWAP_VERTICAL, SMASH, PASS, PAINT, COMBINE
 
 
 def create_players(num_human: int, num_random: int, smart_players: List[int]) \
@@ -46,9 +45,16 @@ def create_players(num_human: int, num_random: int, smart_players: List[int]) \
     objects as the length of <smart_players>. The difficulty levels in
     <smart_players> should be applied to each SmartPlayer object, in order.
     """
-    # TODO: Implement Me
-    goals = generate_goals(1)  # FIXME
-    return [HumanPlayer(0, goals[0])]  # FIXME
+    goals = generate_goals(num_human + num_random + len(smart_players))
+    players = []
+    for i in range(num_human):
+        players.append(HumanPlayer(i, goals[i]))
+    for i in range(num_human, num_human + num_random):
+        players.append(RandomPlayer(i, goals[i]))
+    for i in range(len(smart_players)):
+        players.append(
+            SmartPlayer(i, goals[i + num_human + num_random], smart_players[i]))
+    return players
 
 
 def _get_block(block: Block, location: Tuple[int, int], level: int) -> \
@@ -69,8 +75,26 @@ def _get_block(block: Block, location: Tuple[int, int], level: int) -> \
     Preconditions:
         - 0 <= level <= max_depth
     """
-    # TODO: Implement me
-    return None  # FIXME
+    blocks = _blocks_at_level(block, level)
+    for item in blocks:
+        if item.position[0] <= location[0] < item.position[0] + item.size and \
+                item.position[1] <= location[1] < item.position[1] + item.size:
+            return item
+    return None
+
+
+def _blocks_at_level(block: Block, level: int) -> List[Block]:
+    """Return all the blocks in <block> at <level>. Return an empty list
+    if <level> is greater than block.max_depth"""
+    if block.max_depth < level:
+        return []
+    if level == 0:
+        return [block]
+    else:
+        result = []
+        for child in block.children:
+            result.extend(_blocks_at_level(child, level - 1))
+        return result
 
 
 class Player:
@@ -201,7 +225,8 @@ class RandomPlayer(Player):
     _proceed: bool
 
     def __init__(self, player_id: int, goal: Goal) -> None:
-        # TODO: Implement Me
+        self.id = player_id
+        self.goal = goal
         self._proceed = False
 
     def get_selected_block(self, board: Block) -> Optional[Block]:
@@ -211,7 +236,7 @@ class RandomPlayer(Player):
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             self._proceed = True
 
-    def generate_move(self, board: Block) ->\
+    def generate_move(self, board: Block) -> \
             Optional[Tuple[str, Optional[int], Block]]:
         """Return a valid, randomly generated move.
 
@@ -222,11 +247,26 @@ class RandomPlayer(Player):
         """
         if not self._proceed:
             return None  # Do not remove
-
-        # TODO: Implement Me
-
-        self._proceed = False  # Must set to False before returning!
-        return None  # FIXME
+        board_copy = board.create_copy()
+        actions = list(KEY_ACTION.values())
+        random_action = random.choice(actions)  # (str_action, direction)
+        random_pos = (
+            random.randint(0, board.size - 1),
+            random.randint(0, board.size - 1))
+        random_block = _get_block(board_copy, random_pos,
+                                  random.randint(0, board.max_depth))
+        self._proceed = False
+        if random_action[0] == 'rotate' and board_copy.rotate(random_action[1]):
+            return _create_move(random_action, random_block)
+        if random_action[0] == 'swap' and board_copy.swap(random_action[1]):
+            return _create_move(random_action, random_block)
+        if random_action[0] == 'smash' and board_copy.smash():
+            return _create_move(random_action, random_block)
+        if random_action[0] == 'combine' and board_copy.combine():
+            return _create_move(random_action, random_block)
+        if random_action[0] == 'paint' and board_copy.paint():
+            return _create_move(random_action, random_block)
+        return self.generate_move(board)
 
 
 class SmartPlayer(Player):
@@ -237,7 +277,9 @@ class SmartPlayer(Player):
     _proceed: bool
 
     def __init__(self, player_id: int, goal: Goal, difficulty: int) -> None:
-        # TODO: Implement Me
+        self.id = player_id
+        self.goal = goal
+        self.difficulty = difficulty
         self._proceed = False
 
     def get_selected_block(self, board: Block) -> Optional[Block]:
@@ -247,7 +289,7 @@ class SmartPlayer(Player):
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             self._proceed = True
 
-    def generate_move(self, board: Block) ->\
+    def generate_move(self, board: Block) -> \
             Optional[Tuple[str, Optional[int], Block]]:
         """Return a valid move by assessing multiple valid moves and choosing
         the move that results in the highest score for this player's goal (i.e.,

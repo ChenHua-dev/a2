@@ -144,6 +144,8 @@ class Block:
         """Return True iff this Block and all its descendents are equivalent to
         the <other> Block and all its descendents.
         """
+        if other is None or self is None:
+            return self is None and other is None
         if len(self.children) == 0 and len(other.children) == 0:
             # Both self and other are leaves.
             return self.position == other.position and \
@@ -188,10 +190,12 @@ class Block:
         Block.
         """
         self.position = position
-        if not self.children:
+        if self.children:
             get_children_positions = self._children_positions()
             for i in range(len(self.children)):
-                self.children[i].position = get_children_positions[i]
+                self.children[i]._update_children_positions(
+                    get_children_positions[i])
+        return None
 
     def smashable(self) -> bool:
         """Return True iff this block can be smashed.
@@ -239,10 +243,31 @@ class Block:
         if not self.children:
             return False
         else:
-            self._swap_position(direction)
+            child0 = self.children.pop(0)
+            child1 = self.children.pop(0)
+            child2 = self.children.pop(0)
+            child3 = self.children.pop(0)
+            if direction == 0:
+                child1.position, child0.position, child3.position, \
+                child2.position = child0.position, child1.position, \
+                                  child2.position, child3.position
+                self.children.append(child1)
+                self.children.append(child0)
+                self.children.append(child3)
+                self.children.append(child2)
+            else:
+                child3.position, child2.position, child1.position, \
+                child0.position = child0.position, child1.position, \
+                                  child2.position, child3.position
+                self.children.append(child3)
+                self.children.append(child2)
+                self.children.append(child1)
+                self.children.append(child0)
+            for child in self.children:
+                child._update_children_positions(child.position)
             return True
 
-    def _swap_position(self, direction: int) -> None:
+    def _rotate1(self, direction: int) -> None:
         """Swap the Block and all the descendents in this Block in <size_move>
         horizontally or vertically based on <direction>
 
@@ -250,20 +275,26 @@ class Block:
         if not self.children:
             pass
         else:
-            child0 = self.children[0]
-            child1 = self.children[1]
-            child2 = self.children[2]
-            child3 = self.children[3]
-            if direction == 0:
-                child1.position, child0.position, child3.position, \
-                child2.position = child0.position, child1.position, \
-                                  child2.position, child3.position
-                self.children = [child1, child0, child3, child2]
-            else:
-                child3.position, child2.position, child1.position, \
+            child0 = self.children.pop(0)
+            child1 = self.children.pop(0)
+            child2 = self.children.pop(0)
+            child3 = self.children.pop(0)
+            if direction == 1:
+                child1.position, child2.position, child3.position, \
                 child0.position = child0.position, child1.position, \
                                   child2.position, child3.position
-                self.children = [child3, child2, child1, child0]
+                self.children.append(child1)
+                self.children.append(child2)
+                self.children.append(child3)
+                self.children.append(child0)
+            else:
+                child3.position, child0.position, child1.position, \
+                child2.position = child0.position, child1.position, \
+                                  child2.position, child3.position
+                self.children.append(child3)
+                self.children.append(child0)
+                self.children.append(child1)
+                self.children.append(child2)
             for child in self.children:
                 child._update_children_positions(child.position)
 
@@ -280,31 +311,10 @@ class Block:
         if not self.children:
             return False
         else:
-            self._rotate_self(direction)
+            self._rotate1(direction)
             for child in self.children:
                 child.rotate(direction)
-        return True
-
-    def _rotate_self(self, direction: int) -> None:
-        """Rotate the block by its own with four children; or do nothing if
-        the Block has no children"""
-        if not self.children:
-            pass
-        else:
-            child0 = self.children[0]
-            child1 = self.children[1]
-            child2 = self.children[2]
-            child3 = self.children[3]
-            if direction == 3:
-                child0.position, child1.position, child2.position, \
-                child3.position = child3.position, child0.position, \
-                                  child1.position, child2.position
-                self.children = [child3, child0, child1, child2]
-            else:
-                child0.position, child1.position, child2.position, \
-                child3.position = child1.position, child2.position, \
-                                  child3.position, child0.position
-                self.children = [child1, child2, child3, child0]
+            return True
 
     def paint(self, colour: Tuple[int, int, int]) -> bool:
         """Change this Block's colour iff it is a leaf at a level of max_depth

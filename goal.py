@@ -71,10 +71,10 @@ def _flatten(block: Block) -> List[List[Tuple[int, int, int]]]:
     x_values.sort()
     y_values.sort()
     result = []
-    for x in x_values:
+    for y in y_values:
         x_lst = []
-        for y in y_values:
-            x_lst.append(p2c[(x, y)])
+        for x in x_values:
+            x_lst.append(p2c[(y, x)])
         result.append(x_lst)
     return result
 
@@ -96,7 +96,7 @@ def _get_block_to_max_depth(block: Block) -> Block:
 
 
 def _get_positions_and_color_of_leaves(block: Block) -> Dict[
-        Tuple[int, int], Tuple[int, int, int]]:
+    Tuple[int, int], Tuple[int, int, int]]:
     """Return a dictionary that get map to the positions of all leaves of the
     block to its corresponding colour. The key is the position of the block as
     a (int, int) tuple while the value is the corresponding
@@ -161,18 +161,33 @@ class Goal:
 
 class PerimeterGoal(Goal):
     def score(self, board: Block) -> int:
-        # TODO: Implement me
-        return 148  # FIXME
+        result = 0
+        block_flatten = _flatten(board)
+        length = len(block_flatten) - 1
+        left_side = [block_flatten[i][0] for i in range(length)]
+        right_side = [block_flatten[i][length] for i in range(length)]
+        result += (left_side.count(self.colour) + right_side.count(self.colour)
+                   + block_flatten[0].count(self.colour) +
+                   block_flatten[length].count(self.colour))
+        return result
 
     def description(self) -> str:
-        # TODO: Implement me
-        return 'DESCRIPTION'  # FIXME
+        return 'PerimeterGoal: the current score is, targeting color: {0}'.\
+            format(self.colour)
 
 
 class BlobGoal(Goal):
     def score(self, board: Block) -> int:
-        # TODO: Implement me
-        return 148  # FIXME
+        lst_scores = []
+        flatten_block = _flatten(board)
+        visited = [[-1 for _ in range(len(flatten_block))] for _ in
+                   range(len(flatten_block))]
+        for x in range(len(flatten_block)):
+            for y in range(len(flatten_block)):
+                lst_scores.append(
+                    self._undiscovered_blob_size((x, y), flatten_block,
+                                                 visited))
+        return max(lst_scores)
 
     def _undiscovered_blob_size(self, pos: Tuple[int, int],
                                 board: List[List[Tuple[int, int, int]]],
@@ -194,8 +209,37 @@ class BlobGoal(Goal):
         Update <visited> so that all cells that are visited are marked with
         either 0 or 1.
         """
-        # TODO: Implement me
-        pass  # FIXME
+        if pos[0] < len(board) and pos[1] < len(board):
+            return 0
+        self._update_visited(pos, board, visited)
+        result = 0
+        for row in visited:
+            for cell in row:
+                result += cell
+        return result
+
+    def _update_visited(self, pos: Tuple[int, int],
+                        board: List[List[Tuple[int, int, int]]],
+                        visited: List[List[int]]) -> None:
+        """
+        Update <visited> so that all cells that are visited are marked with
+        either 0 or 1.
+        """
+        surround_lst = [(pos[0] + 1, pos[1]), (pos[0] - 1, pos[1]),
+                        (pos[0], pos[1] + 1), (pos[0], pos[1] - 1)]
+        for position in surround_lst:
+            x, y = position
+            if (x >= len(board) or y >= len(board)) and visited[x][y] != -1:
+                surround_lst.remove(position)
+        if not surround_lst:
+            return None
+        for surround in surround_lst:
+            cell_color = board[surround[0]][surround[1]]
+            if cell_color == self.colour:
+                visited[surround[0]][surround[1]] = 1
+            else:
+                visited[surround[0]][surround[1]] = 0
+            self._update_visited(surround, board, visited)
 
     def description(self) -> str:
         # TODO: Implement me
@@ -212,4 +256,3 @@ if __name__ == '__main__':
         ],
         'max-attributes': 15
     })
-
