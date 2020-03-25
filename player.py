@@ -303,11 +303,45 @@ class SmartPlayer(Player):
         """
         if not self._proceed:
             return None  # Do not remove
-
-        # TODO: Implement Me
-
+        actions = list(KEY_ACTION.values())
+        mark_to_action = {}
+        for _ in range(self.difficulty):
+            board_copy = board.create_copy()
+            original_mark = self.goal.score(board_copy)
+            random_action = random.choice(actions)  # (str_action, direction)
+            random_pos = (
+                random.randint(0, board.size - 1),
+                random.randint(0, board.size - 1))
+            random_block = _get_block(board_copy, random_pos,
+                                      random.randint(0, board.max_depth))
+            if random_action[0] == 'rotate' and board_copy.rotate(
+                    random_action[1]):
+                mark_to_action[
+                    self.goal.score(board_copy) - original_mark] = _create_move(
+                    random_action, random_block)
+            if random_action[0] == 'swap' and board_copy.swap(random_action[1]):
+                mark_to_action[
+                    self.goal.score(board_copy) - original_mark] = _create_move(
+                    random_action, random_block)
+            if random_action[0] == 'smash' and board_copy.smash():
+                mark_to_action[
+                    self.goal.score(board_copy) - original_mark] = _create_move(
+                    random_action, random_block)
+            if random_action[0] == 'combine' and board_copy.combine():
+                mark_to_action[
+                    self.goal.score(board_copy) - original_mark] = _create_move(
+                    random_action, random_block)
+            if random_action[0] == 'paint' and board_copy.paint():
+                mark_to_action[
+                    self.goal.score(board_copy) - original_mark] = _create_move(
+                    random_action, random_block)
+        marks = list(mark_to_action.keys())
         self._proceed = False  # Must set to False before returning!
-        return None  # FIXME
+        if max(marks) > 0:
+            return mark_to_action[max(marks)]
+        return 'pass', None, board
+
+
 
 
 if __name__ == '__main__':
