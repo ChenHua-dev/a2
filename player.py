@@ -47,8 +47,27 @@ def create_players(num_human: int, num_random: int, smart_players: List[int]) \
     <smart_players> should be applied to each SmartPlayer object, in order.
     """
     # TODO: Implement Me
-    goals = generate_goals(1)  # FIXME
-    return [HumanPlayer(0, goals[0])]  # FIXME
+    acc = []
+    # Generate human player
+    id_index = 0
+    for _ in range(num_human):
+        goals = generate_goals(1)
+        acc.append(HumanPlayer(id_index, goals[0]))
+        id_index += 1
+
+    # Generate random player
+    for _ in range(num_random):
+        goals = generate_goals(1)
+        acc.append(RandomPlayer(id_index, goals[0]))
+        id_index += 1
+
+    # Generate smart player
+    for i in range(len(smart_players)):
+        goals = generate_goals(1)
+        acc.append(SmartPlayer(id_index, goals[0], smart_players[i]))
+        id_index += 1
+
+    return acc
 
 
 def _get_block(block: Block, location: Tuple[int, int], level: int) -> \
@@ -68,9 +87,34 @@ def _get_block(block: Block, location: Tuple[int, int], level: int) -> \
 
     Preconditions:
         - 0 <= level <= max_depth
+        - block.level <= level <= max_depth
     """
     # TODO: Implement me
-    return None  # FIXME
+    # block attributes
+    x = block.position[0]
+    y = block.position[1]
+    d = round(block.size / 2.0)
+    # target location
+    target_x = location[0]
+    target_y = location[1]
+
+    if x <= target_x < x + 2 * d and y <= target_y < y + 2 * d:
+        if len(block.children) == 0:
+            return block
+        elif level == 0:
+            return block
+        else:
+            if target_x >= x + d and target_y < y + d:
+                return _get_block(block.children[0], location, level - 1)
+            elif target_x < x + d and target_y < y + d:
+                return _get_block(block.children[1], location, level - 1)
+            elif target_x < x + d and target_y >= y + d:
+                return _get_block(block.children[2], location, level - 1)
+            else:
+            # elif target_x >= x + d and target_y >= y + d:
+                return _get_block(block.children[3], location, level - 1)
+    else:
+        return None
 
 
 class Player:
@@ -156,7 +200,7 @@ class HumanPlayer(Player):
         If no block is selected by the player, return None.
         """
         mouse_pos = pygame.mouse.get_pos()
-        block = _get_block(board, mouse_pos, self._level)
+        block = _get_block(board, mouse_pos, min(self._level, board.max_depth))
 
         return block
 
@@ -202,6 +246,7 @@ class RandomPlayer(Player):
 
     def __init__(self, player_id: int, goal: Goal) -> None:
         # TODO: Implement Me
+        Player.__init__(self, player_id, goal)
         self._proceed = False
 
     def get_selected_block(self, board: Block) -> Optional[Block]:
@@ -220,13 +265,55 @@ class RandomPlayer(Player):
 
         This function does not mutate <board>.
         """
+        # if proceed is False, then return None
         if not self._proceed:
             return None  # Do not remove
+        # if proceed is True
+        else:
+            # TODO: Implement Me
+            # 1. Make deep copy of the board
+            copied_board = board.create_copy()
 
-        # TODO: Implement Me
+            # Random position
+            random_x = random.randint(0, copied_board.size)
+            random_y = random.randint(0, copied_board.size)
+            random_pos = (random_x, random_y)
 
-        self._proceed = False  # Must set to False before returning!
-        return None  # FIXME
+            # Random level
+            # where does the random level start? board.level or 0 or 1?
+            random_level = random.randint(copied_board.level,
+                                          copied_board.max_depth)
+            # Extract the temporary board
+            temp_block = _get_block(copied_board, random_pos, random_level)
+            if temp_block is None:
+                return None
+
+            potential_moves = []
+            for value in KEY_ACTION.values():
+                if value[0] != PASS[0]:
+                    potential_moves.append(value)
+
+            # Generating random move
+            action = random.choice(potential_moves)  # this is a tuple
+            direction = action[1]
+
+            if action in [ROTATE_CLOCKWISE, ROTATE_COUNTER_CLOCKWISE]:
+                temp_block.rotate(direction)
+            elif action in [SWAP_HORIZONTAL, SWAP_VERTICAL]:
+                temp_block.swap(direction)
+            elif action == SMASH:
+                temp_block.smash()
+            elif action == PAINT:
+                temp_block.paint(self.goal.colour)
+            elif action == COMBINE:
+                temp_block.combine()
+            else:
+                pass
+
+            move = _create_move(action, temp_block)
+
+            self._proceed = False  # Must set to False before returning!
+            return move
 
 
 class SmartPlayer(Player):
@@ -234,10 +321,13 @@ class SmartPlayer(Player):
     # _proceed:
     #   True when the player should make a move, False when the player should
     #   wait.
+    _difficulty: int
     _proceed: bool
 
     def __init__(self, player_id: int, goal: Goal, difficulty: int) -> None:
         # TODO: Implement Me
+        Player.__init__(self, player_id, goal)
+        self._difficulty = difficulty
         self._proceed = False
 
     def get_selected_block(self, board: Block) -> Optional[Block]:
@@ -261,22 +351,77 @@ class SmartPlayer(Player):
         """
         if not self._proceed:
             return None  # Do not remove
+        else:
+            # TODO: Implement Me
+            # calculate current score
+            curr_score = self.goal.score(board)
+            best_score = None  # curr_score
 
-        # TODO: Implement Me
+            best_move = None  # _create_move(PASS, block: Block)
+            for _ in range(self._difficulty):
+                # 1. Make deep copy of the board
+                copied_board = board.create_copy()
 
-        self._proceed = False  # Must set to False before returning!
-        return None  # FIXME
+                # 2. Generate a random block
+                # Random position
+                random_x = random.randint(0, copied_board.size)
+                random_y = random.randint(0, copied_board.size)
+                random_pos = (random_x, random_y)
+
+                # Random level
+                # where does the random level start? board.level or 0 or 1?
+                random_level = random.randint(copied_board.level,
+                                              copied_board.max_depth)
+                # Extract the temporary board
+                temp_block = _get_block(copied_board, random_pos, random_level)
+                if temp_block is None:
+                    return None
+
+                potential_moves = []
+                for value in KEY_ACTION.values():
+                    if value[0] != PASS[0]:
+                        potential_moves.append(value)
+
+                # Generating random move
+                action = random.choice(potential_moves)  # this is a tuple
+                direction = action[1]
+
+                if action in [ROTATE_CLOCKWISE, ROTATE_COUNTER_CLOCKWISE]:
+                    temp_block.rotate(direction)
+                elif action in [SWAP_HORIZONTAL, SWAP_VERTICAL]:
+                    temp_block.swap(direction)
+                elif action == SMASH:
+                    temp_block.smash()
+                elif action == PAINT:
+                    temp_block.paint(self.goal.colour)
+                elif action == COMBINE:
+                    temp_block.combine()
+                else:
+                    pass
+
+                # calculate new score
+                new_score = self.goal.score(copied_board)
+                if new_score > curr_score:
+                    if best_score is None or best_score < new_score:
+                        best_score = new_score
+                        best_move = _create_move(action, temp_block)
+
+            self._proceed = False  # Must set to False before returning!
+            if best_score is None:
+                return None
+            else:
+                return best_move
 
 
-if __name__ == '__main__':
-    import python_ta
-
-    python_ta.check_all(config={
-        'allowed-io': ['process_event'],
-        'allowed-import-modules': [
-            'doctest', 'python_ta', 'random', 'typing', 'actions', 'block',
-            'goal', 'pygame', '__future__'
-        ],
-        'max-attributes': 10,
-        'generated-members': 'pygame.*'
-    })
+# if __name__ == '__main__':
+#     import python_ta
+#
+#     python_ta.check_all(config={
+#         'allowed-io': ['process_event'],
+#         'allowed-import-modules': [
+#             'doctest', 'python_ta', 'random', 'typing', 'actions', 'block',
+#             'goal', 'pygame', '__future__'
+#         ],
+#         'max-attributes': 10,
+#         'generated-members': 'pygame.*'
+#     })
