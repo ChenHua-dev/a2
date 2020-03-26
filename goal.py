@@ -164,30 +164,39 @@ class PerimeterGoal(Goal):
         result = 0
         block_flatten = _flatten(board)
         length = len(block_flatten) - 1
-        left_side = [block_flatten[i][0] for i in range(length)]
-        right_side = [block_flatten[i][length] for i in range(length)]
+        left_side = [block_flatten[i][0] for i in range(length + 1)]
+        right_side = [block_flatten[i][length] for i in range(length + 1)]
         result += (left_side.count(self.colour) + right_side.count(self.colour)
                    + block_flatten[0].count(self.colour) +
                    block_flatten[length].count(self.colour))
         return result
 
     def description(self) -> str:
-        return 'PerimeterGoal: the current score is, targeting color: {0}'.\
-            format(self.colour)
+        return 'The goal aims to calculate the total number of unit ' \
+               'cells with {0} in the perimeter'.format(self.colour)
 
 
 class BlobGoal(Goal):
     def score(self, board: Block) -> int:
-        lst_scores = []
+        """ Return the max scores of the blod with <self.colour> that
+        is with the max size in <board>.
+        """
+        color_scores = {}
         flatten_block = _flatten(board)
-        visited = [[-1 for _ in range(len(flatten_block))] for _ in
-                   range(len(flatten_block))]
         for x in range(len(flatten_block)):
             for y in range(len(flatten_block)):
-                lst_scores.append(
-                    self._undiscovered_blob_size((x, y), flatten_block,
-                                                 visited))
-        return max(lst_scores)
+                visited = [[-1 for _ in range(len(flatten_block))] for _ in
+                           range(len(flatten_block))]
+                visited[x][y] = 1
+                new_score = self._undiscovered_blob_size((x, y), flatten_block,
+                                                         visited)
+                if flatten_block[x][y] not in color_scores:
+                    color_scores[flatten_block[x][y]] = [new_score]
+                else:
+                    color_scores[flatten_block[x][y]].extend([new_score])
+        if self.colour in color_scores:
+            return max(color_scores[self.colour])
+        return 0
 
     def _undiscovered_blob_size(self, pos: Tuple[int, int],
                                 board: List[List[Tuple[int, int, int]]],
@@ -209,41 +218,53 @@ class BlobGoal(Goal):
         Update <visited> so that all cells that are visited are marked with
         either 0 or 1.
         """
-        if pos[0] < len(board) and pos[1] < len(board):
+        if pos[0] > len(board) or pos[1] > len(board):
             return 0
-        self._update_visited(pos, board, visited)
+        color_pos = board[pos[0]][pos[1]]
+        self._update_visited(pos, board, visited, color_pos)
         result = 0
         for row in visited:
             for cell in row:
-                result += cell
+                if cell != -1:
+                    result += cell
         return result
 
     def _update_visited(self, pos: Tuple[int, int],
                         board: List[List[Tuple[int, int, int]]],
-                        visited: List[List[int]]) -> None:
+                        visited: List[List[int]],
+                        color_pos: Tuple[int, int, int]) -> None:
         """
-        Update <visited> so that all cells that are visited are marked with
-        either 0 or 1.
+        Update the <visited>, which is input as lists of lists of -1s and
+        an 1 in <pos>to a new <visited> which is lists of lists of -1, 0 and 1.
+
+        We see that 1 means all the cells that are visited with <color_pos>
+        while 0 means cells that are visited but not <color_pos>.
+        And -1 means cells that are not visited because they are not in the
+        <color_pos> blod including <pos> in <board>.
+
+        Hence, the updated cells would look like 1s surrounded by 0s and -1s
+        elsewhere in general.
         """
         surround_lst = [(pos[0] + 1, pos[1]), (pos[0] - 1, pos[1]),
                         (pos[0], pos[1] + 1), (pos[0], pos[1] - 1)]
-        for position in surround_lst:
+        surround_lst_copy = surround_lst[:]
+        for position in surround_lst_copy:
             x, y = position
-            if (x >= len(board) or y >= len(board)) and visited[x][y] != -1:
+            if (x >= len(board) or y >= len(board)) or x < 0 or y < 0 or \
+                    visited[x][y] != -1 or board[x][y] != color_pos:
                 surround_lst.remove(position)
-        if not surround_lst:
-            return None
         for surround in surround_lst:
             cell_color = board[surround[0]][surround[1]]
-            if cell_color == self.colour:
+            if cell_color == color_pos:
                 visited[surround[0]][surround[1]] = 1
             else:
                 visited[surround[0]][surround[1]] = 0
-            self._update_visited(surround, board, visited)
+            self._update_visited(surround, board, visited, color_pos)
+        return None
 
     def description(self) -> str:
-        # TODO: Implement me
-        return 'DESCRIPTION'  # FIXME
+        return 'The goal aims for the largest \"blob\" of {0}'.format(
+            self.colour)
 
 
 if __name__ == '__main__':

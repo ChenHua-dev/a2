@@ -348,8 +348,6 @@ class Block:
         else:
             self.children = []
             self.colour = majority_color
-            self.level = self.level - 1
-            self.size = self.size * 2
         return True
 
     def _get_colour_lst(self) -> List[Tuple[int, int, int]]:
