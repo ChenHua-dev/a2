@@ -275,6 +275,7 @@ class RandomPlayer(Player):
             copied_board = board.create_copy()
 
             # Random position
+            # copied_board.size or copied_board.size - 1?
             random_x = random.randint(0, copied_board.size)
             random_y = random.randint(0, copied_board.size)
             random_pos = (random_x, random_y)
@@ -358,12 +359,16 @@ class SmartPlayer(Player):
             best_score = None  # curr_score
 
             best_move = None  # _create_move(PASS, block: Block)
+            # best_move = _create_move(PASS, block: Block)
             for _ in range(self._difficulty):
                 # 1. Make deep copy of the board
                 copied_board = board.create_copy()
 
                 # 2. Generate a random block
                 # Random position
+                # copied_board.size or copied_board.size - 1?
+                # copied_board.size should be safe since _get_block would
+                # return None if out of boundary
                 random_x = random.randint(0, copied_board.size)
                 random_y = random.randint(0, copied_board.size)
                 random_pos = (random_x, random_y)
@@ -408,7 +413,8 @@ class SmartPlayer(Player):
 
             self._proceed = False  # Must set to False before returning!
             if best_score is None:
-                return None
+                any_block = Block((0, 0), 1, None, 0, 1)
+                return _create_move(PASS[0], any_block)
             else:
                 return best_move
 
