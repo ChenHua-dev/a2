@@ -46,6 +46,11 @@ def generate_board(max_depth: int, size: int) -> Block:
 
     return board
 
+# BOARD_SIZE = 750
+# max_depth = 3
+# generate_board(3, 750)
+# board = Block((0, 0), 750, random.choice(COLOUR_LIST), 0, 3)
+
 
 class Block:
     """A square Block in the Blocky game, represented as a tree.
@@ -204,36 +209,6 @@ class Block:
                 new_child_y = child_position[i][1] + dy
                 new_child_position = (new_child_x, new_child_y)
                 self.children[i]._update_children_positions(new_child_position)
-        # self.position = position
-        # # find out the current level child size in order to calculate
-        # child_size = self._child_size()
-        #
-        # if len(self.children) <= 0:
-        #     return None
-        # else:
-        #     # Update children at index 0
-        #     new_child_0_x = position[0] + child_size
-        #     new_child_0_y = position[1]
-        #     new_child_0_position = (new_child_0_x, new_child_0_y)
-        #     self.children[0]._update_children_positions(new_child_0_position)
-        #
-        #     # Update children at index 1
-        #     new_child_1_x = position[0]
-        #     new_child_1_y = position[1]
-        #     new_child_1_position = (new_child_1_x, new_child_1_y)
-        #     self.children[1]._update_children_positions(new_child_1_position)
-        #
-        #     # Update children at index 2
-        #     new_child_2_x = position[0]
-        #     new_child_2_y = position[1] + child_size
-        #     new_child_2_position = (new_child_2_x, new_child_2_y)
-        #     self.children[2]._update_children_positions(new_child_2_position)
-        #
-        #     # Update children at index 3
-        #     new_child_3_x = position[0] + child_size
-        #     new_child_3_y = position[1] + child_size
-        #     new_child_3_position = (new_child_3_x, new_child_3_y)
-        #     self.children[3]._update_children_positions(new_child_3_position)
 
     def smashable(self) -> bool:
         """Return True iff this block can be smashed.
@@ -243,7 +218,7 @@ class Block:
         """
         return self.level != self.max_depth and len(self.children) == 0
 
-    def _smash_helper(self, level: int, max_depth: int) -> Block:
+    def _smash_helper(self, size: int, level: int, max_depth: int) -> Block:
         """Return a Block instance that is randomly-generated with the given
         <level> and <max_depth>
 
@@ -251,28 +226,22 @@ class Block:
             if random.random() < math.exp(-0.25 * level).
             else create generated block colour with random.choice(COLOUR_LIST)
         """
-        # when level < max_depth
-        if level < max_depth:
+        curr_size = round(size / 2.0)
+        block = Block((0, 0), curr_size, None, level, max_depth)
+        if level < max_depth:  # when level < max_depth
             rn = random.random()
-            block = Block((0, 0), 0, None, level, max_depth)
-            # subdivide further
-            if rn < math.exp(-0.25 * level):
-                child_0 = self._smash_helper(level + 1, max_depth)
-                child_1 = self._smash_helper(level + 1, max_depth)
-                child_2 = self._smash_helper(level + 1, max_depth)
-                child_3 = self._smash_helper(level + 1, max_depth)
+            if rn < math.exp(-0.25 * level):  # subdivide further
+                child_0 = self._smash_helper(curr_size, level + 1, max_depth)
+                child_1 = self._smash_helper(curr_size, level + 1, max_depth)
+                child_2 = self._smash_helper(curr_size, level + 1, max_depth)
+                child_3 = self._smash_helper(curr_size, level + 1, max_depth)
                 block.children.extend([child_0, child_1, child_2, child_3])
-                # _update_children_positions will be used in Block.smash()
             else:
                 block.colour = random.choice(COLOUR_LIST)
             return block
-        # when level < max_depth
-        elif level == max_depth:
-            block = Block((0, 0), 0, None, level, max_depth)
+        else:  # when level == max_depth
             block.colour = random.choice(COLOUR_LIST)
             return block
-        else:
-            pass
 
     def smash(self) -> bool:
         """Sub-divide this block so that it has four randomly generated
@@ -285,64 +254,26 @@ class Block:
         """
         # TODO: Implement me
         if self.smashable():  # Block is not yet at its max depth
-            # 1. when smashing, turn this block colour off
+            # 1. turn block colour off
             self.colour = None
-
-            # 2. children level
-            children_level = self.level + 1
-
-            # 3. maximum depth for sub-blocks within this block
+            # 2. current block size
+            size = self.size
+            # 3. children level
+            child_level = self.level + 1
+            # 4. maximum depth for sub-blocks within this block
             max_depth = self.max_depth
 
-            # 4. appending children blocks
-            child_0 = self._smash_helper(children_level, max_depth)
-            child_1 = self._smash_helper(children_level, max_depth)
-            child_2 = self._smash_helper(children_level, max_depth)
-            child_3 = self._smash_helper(children_level, max_depth)
-            self.children.extend([child_0, child_1, child_2, child_3])
-            self._update_children_positions(self.position)
+            # 5. appending children blocks
+            child_0 = self._smash_helper(size, child_level, max_depth)
+            child_1 = self._smash_helper(size, child_level, max_depth)
+            child_2 = self._smash_helper(size, child_level, max_depth)
+            child_3 = self._smash_helper(size, child_level, max_depth)
 
+            self.children = [child_0, child_1, child_2, child_3]
+            self._update_children_positions(self.position)
             return True
         else:
             return False
-        # if self.smashable():
-        #     for _ in range(4):
-        #         self.children.append(_smash_helper(self.level + 1, self.max_depth))
-        #     self._update_children_positions(self.position)
-        #     return True
-        # else:
-        #     return False
-        # If this Block's level is <max_depth>, do nothing.
-        # If this block has children, do nothing.
-        # if self.smashable():
-        #
-        #     # 1. when smashing, turn this block colour off
-        #     self.colour = None
-        #
-        #     # 2. extract the positions for its children
-        #     children_positions = self._children_positions()
-        #
-        #     # 3. create children
-        #     children_size = self._child_size()  # int(self.size / 2)
-        #     children_level = self.level + 1
-        #
-        #     c0 = Block(children_positions[0], children_size,
-        #                random.choice(COLOUR_LIST), children_level,
-        #                self.max_depth)
-        #     c1 = Block(children_positions[1], children_size,
-        #                random.choice(COLOUR_LIST), children_level,
-        #                self.max_depth)
-        #     c2 = Block(children_positions[2], children_size,
-        #                random.choice(COLOUR_LIST), children_level,
-        #                self.max_depth)
-        #     c3 = Block(children_positions[3], children_size,
-        #                random.choice(COLOUR_LIST), children_level,
-        #                self.max_depth)
-        #
-        #     self.children.extend([c0, c1, c2, c3])
-        #     return True
-        # else:
-        #     return False
 
     def swap(self, direction: int) -> bool:
         """Swap the child Blocks of this Block.
@@ -361,20 +292,12 @@ class Block:
             child_1 = self.children[1]
             child_2 = self.children[2]
             child_3 = self.children[3]
-            while len(self.children) > 0:
-                self.children.pop()
             # vertical-swap
             if direction == 1:
-                self.children.append(child_3)
-                self.children.append(child_2)
-                self.children.append(child_1)
-                self.children.append(child_0)
+                self.children = [child_3, child_2, child_1, child_0]
             # horizontal-swap
             elif direction == 0:
-                self.children.append(child_1)
-                self.children.append(child_0)
-                self.children.append(child_3)
-                self.children.append(child_2)
+                self.children = [child_1, child_0, child_3, child_2]
             # Update children positions
             self._update_children_positions(self.position)
             return True
@@ -408,7 +331,7 @@ class Block:
                     child.rotate(direction)
                 return True
         # Counter-clockwise rotation
-        elif direction == 3:
+        else:  # elif direction == 3:
             # Base case
             if len(self.children) == 0:
                 return False
@@ -434,12 +357,10 @@ class Block:
             # check if this is a leaf
             if len(self.children) != 0:
                 return False
-            elif len(self.children) == 0:
+            else:  # elif len(self.children) == 0:
                 if self.colour != colour:
                     self.colour = colour
                 return True
-            else:
-                pass
         return False
 
     def combine(self) -> bool:
@@ -458,12 +379,7 @@ class Block:
         # TODO: Implement me
         if self.level == self.max_depth - 1 and len(self.children) == 4:
             # calculating majority
-            # board.children[2].children
-            # colour_list = [c.colour for c in board.children[2].children]
-
-            # COLOUR_LIST defined by instructor
-            # colour_tuple = [c.colour for c in board.children[2].children]
-            colour_tuple = [c.colour for c in self.children]
+            colour_tuple = [child.colour for child in self.children]
             acc = []
             for c in COLOUR_LIST:
                 acc.append(colour_tuple.count(c))
@@ -488,34 +404,6 @@ class Block:
                 self.children = []
                 return True
         return False
-    # test
-    # import random
-    # random.seed(148)
-    # board = Block((2, 2), 4, None, 0, 2)
-    # c1 = Block((4, 2), 2, random.choice(COLOUR_LIST), 1, 2)
-    # c2 = Block((2, 2), 2, random.choice(COLOUR_LIST), 1, 2)
-    # c3 = Block((2, 4), 2, random.choice(COLOUR_LIST), 1, 2)
-    # c3_1 = Block((3, 2), 1, random.choice(COLOUR_LIST), 1, 2)
-    # c3_2 = Block((2, 2), 1, random.choice(COLOUR_LIST), 1, 2)
-    # c3_3 = Block((2, 3), 1, random.choice(COLOUR_LIST), 1, 2)
-    # c3_4 = Block((3, 3), 1, random.choice(COLOUR_LIST), 1, 2)
-    # c3.children.append(c3_1)
-    # c3.children.append(c3_2)
-    # c3.children.append(c3_3)
-    # c3.children.append(c3_4)
-    # c4 = Block((4, 4), 2, random.choice(COLOUR_LIST), 1, 2)
-    # c4_1 = Block((5, 4), 1, random.choice(COLOUR_LIST), 1, 2)
-    # c4_2 = Block((4, 4), 1, random.choice(COLOUR_LIST), 1, 2)
-    # c4_3 = Block((4, 5), 1, random.choice(COLOUR_LIST), 1, 2)
-    # c4_4 = Block((5, 5), 1, random.choice(COLOUR_LIST), 1, 2)
-    # c4.children.append(c4_1)
-    # c4.children.append(c4_2)
-    # c4.children.append(c4_3)
-    # c4.children.append(c4_4)
-    # board.children.append(c1)
-    # board.children.append(c2)
-    # board.children.append(c3)
-    # board.children.append(c4)
 
     def create_copy(self) -> Block:
         """Return a new Block that is a deep copy of this Block.
@@ -523,7 +411,7 @@ class Block:
         Remember that a deep copy has new blocks (not aliases) at every level.
         """
         # TODO: Implement me
-        if self.children == []:
+        if len(self.children) == 0:
             curr_position = self.position
             curr_size = self.size
             curr_colour = self.colour
@@ -545,52 +433,24 @@ class Block:
                 copy_block.children.append(temp)
             return copy_block
 
-    # import random
-    # random.seed(148)
-    # board = Block((2, 2), 4, None, 0, 2)
-    # c1 = Block((4, 2), 2, random.choice(COLOUR_LIST), 1, 2)
-    # c2 = Block((2, 2), 2, random.choice(COLOUR_LIST), 1, 2)
-    # c3 = Block((2, 4), 2, random.choice(COLOUR_LIST), 1, 2)
-    # c3_1 = Block((3, 2), 1, random.choice(COLOUR_LIST), 2, 2)
-    # c3_2 = Block((2, 2), 1, random.choice(COLOUR_LIST), 2, 2)
-    # c3_3 = Block((2, 3), 1, random.choice(COLOUR_LIST), 2, 2)
-    # c3_4 = Block((3, 3), 1, random.choice(COLOUR_LIST), 2, 2)
-    # c3.children.append(c3_1)
-    # c3.children.append(c3_2)
-    # c3.children.append(c3_3)
-    # c3.children.append(c3_4)
-    # c4 = Block((4, 4), 2, random.choice(COLOUR_LIST), 1, 2)
-    # c4_1 = Block((5, 4), 1, random.choice(COLOUR_LIST), 2, 2)
-    # c4_2 = Block((4, 4), 1, random.choice(COLOUR_LIST), 2, 2)
-    # c4_3 = Block((4, 5), 1, random.choice(COLOUR_LIST), 2, 2)
-    # c4_4 = Block((5, 5), 1, random.choice(COLOUR_LIST), 2, 2)
-    # c4.children.append(c4_1)
-    # c4.children.append(c4_2)
-    # c4.children.append(c4_3)
-    # c4.children.append(c4_4)
-    # board.children.append(c1)
-    # board.children.append(c2)
-    # board.children.append(c3)
-    # board.children.append(c4)
 
+if __name__ == '__main__':
+    import python_ta
+    python_ta.check_all(config={
+        'allowed-import-modules': [
+            'doctest', 'python_ta', 'random', 'typing', '__future__', 'math',
+            'settings'
+        ],
+        'max-attributes': 15,
+        'max-args': 6
+    })
 
-# if __name__ == '__main__':
-#     import python_ta
-#     python_ta.check_all(config={
-#         'allowed-import-modules': [
-#             'doctest', 'python_ta', 'random', 'typing', '__future__', 'math',
-#             'settings'
-#         ],
-#         'max-attributes': 15,
-#         'max-args': 6
-#     })
-#
-#     # This is a board consisting of only one block.
-#     b1 = Block((0, 0), 750, COLOUR_LIST[0], 0, 1)
-#     print("=== tiny board ===")
-#     print(b1)
-#
-#     # Now let's make a random board.
-#     b2 = generate_board(3, 750)
-#     print("\n=== random board ===")
-#     print(b2)
+    # This is a board consisting of only one block.
+    # b1 = Block((0, 0), 750, COLOUR_LIST[0], 0, 1)
+    # print("=== tiny board ===")
+    # print(b1)
+
+    # Now let's make a random board.
+    # b2 = generate_board(3, 750)
+    # print("\n=== random board ===")
+    # print(b2)

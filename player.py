@@ -22,7 +22,7 @@ Misha Schwartz, and Jaisie Sin.
 This file contains the hierarchy of player classes.
 """
 from __future__ import annotations
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Dict
 import random
 import pygame
 
@@ -62,9 +62,9 @@ def create_players(num_human: int, num_random: int, smart_players: List[int]) \
         id_index += 1
 
     # Generate smart player
-    for i in range(len(smart_players)):
+    for item in smart_players:
         goals = generate_goals(1)
-        acc.append(SmartPlayer(id_index, goals[0], smart_players[i]))
+        acc.append(SmartPlayer(id_index, goals[0], item))
         id_index += 1
 
     return acc
@@ -115,6 +115,41 @@ def _get_block(block: Block, location: Tuple[int, int], level: int) -> \
                 return _get_block(block.children[3], location, level - 1)
     else:
         return None
+
+
+def _generate_random_block(board: Block) -> \
+        Tuple[Block, Optional[Block], Tuple[int, int], int]:
+    """Return
+
+    """
+    # 1. Make deep copy of the board
+    copied_board = board.create_copy()
+
+    # Random position
+    # copied_board.size or copied_board.size - 1?
+    random_x = random.randint(0, copied_board.size)
+    random_y = random.randint(0, copied_board.size)
+    random_pos = (random_x, random_y)
+
+    # Random level
+    # where does the random level start? board.level or 0 or 1?
+    random_level = random.randint(copied_board.level, copied_board.max_depth)
+    # Extract the temporary board
+    random_block = _get_block(copied_board, random_pos, random_level)
+
+    return copied_board, random_block, random_pos, random_level
+
+
+def _generate_random_move(actions: Dict[int, Tuple[str, Optional[int]]]) -> \
+        Tuple[str, Optional[int]]:
+    # Generating random move
+    potential_moves = []
+    for value in actions.values():
+        if value[0] != PASS[0]:
+            potential_moves.append(value)
+    # Generating random move, which is a tuple
+    action = random.choice(potential_moves)
+    return action
 
 
 class Player:
@@ -271,47 +306,17 @@ class RandomPlayer(Player):
         # if proceed is True
         else:
             # TODO: Implement Me
-            # 1. Make deep copy of the board
-            copied_board = board.create_copy()
-
-            # Random position
-            # copied_board.size or copied_board.size - 1?
-            random_x = random.randint(0, copied_board.size)
-            random_y = random.randint(0, copied_board.size)
-            random_pos = (random_x, random_y)
-
-            # Random level
-            # where does the random level start? board.level or 0 or 1?
-            random_level = random.randint(copied_board.level,
-                                          copied_board.max_depth)
             # Extract the temporary board
-            temp_block = _get_block(copied_board, random_pos, random_level)
-            if temp_block is None:
+            random_outcome = _generate_random_block(board)
+            random_block = random_outcome[1]
+            random_pos = random_outcome[2]
+            random_level = random_outcome[3]
+            if random_block is None:
                 return None
 
-            potential_moves = []
-            for value in KEY_ACTION.values():
-                if value[0] != PASS[0]:
-                    potential_moves.append(value)
-
-            # Generating random move
-            action = random.choice(potential_moves)  # this is a tuple
-            direction = action[1]
-
-            if action in [ROTATE_CLOCKWISE, ROTATE_COUNTER_CLOCKWISE]:
-                temp_block.rotate(direction)
-            elif action in [SWAP_HORIZONTAL, SWAP_VERTICAL]:
-                temp_block.swap(direction)
-            elif action == SMASH:
-                temp_block.smash()
-            elif action == PAINT:
-                temp_block.paint(self.goal.colour)
-            elif action == COMBINE:
-                temp_block.combine()
-            else:
-                pass
-
-            move = _create_move(action, temp_block)
+            action = _generate_random_move(KEY_ACTION)  # this is a tuple
+            block = _get_block(board, random_pos, random_level)
+            move = _create_move(action, block)
 
             self._proceed = False  # Must set to False before returning!
             return move
@@ -350,84 +355,63 @@ class SmartPlayer(Player):
 
         This function does not mutate <board>.
         """
+        # TODO: Implement Me
         if not self._proceed:
-            return None  # Do not remove
+            return None
+
+        curr_score = self.goal.score(board)  # calculate current score
+        best_score, best_action, best_pos, best_level = None, None, None, None
+
+        for _ in range(self._difficulty):
+            # 1. Generate random block in order of:
+            #    copied_board, random_block, random_pos, random_level
+            random_outcome = _generate_random_block(board)
+            if random_outcome[1] is None:
+                return None
+            # 2. Generate random move: Tuple[action name, direction number]
+            action = _generate_random_move(KEY_ACTION)
+
+            # 3. For copied_board and random_block (from copied board).
+            #    Calculate each new score
+            if action in [ROTATE_CLOCKWISE, ROTATE_COUNTER_CLOCKWISE]:
+                random_outcome[1].rotate(action[1])
+            elif action in [SWAP_HORIZONTAL, SWAP_VERTICAL]:
+                random_outcome[1].swap(action[1])
+            elif action == SMASH:
+                random_outcome[1].smash()
+            elif action == PAINT:
+                random_outcome[1].paint(self.goal.colour)
+            elif action == COMBINE:
+                random_outcome[1].combine()
+
+            # 4. calculate new score based on mutate copied board
+            new_score = self.goal.score(random_outcome[0])
+            if new_score > curr_score:
+                if best_score is None or best_score < new_score:
+                    best_score = new_score
+                    best_action = action
+                    best_pos = random_outcome[2]  # random_pos
+                    best_level = random_outcome[3]  # random_level
+
+        self._proceed = False  # Must set to False before returning!
+        if best_score is None:
+            return _create_move(PASS, Block((0, 0), 1, None, 0, 1))
         else:
-            # TODO: Implement Me
-            # calculate current score
-            curr_score = self.goal.score(board)
-            best_score = None  # curr_score
-
-            best_move = None  # _create_move(PASS, block: Block)
-            # best_move = _create_move(PASS, block: Block)
-            for _ in range(self._difficulty):
-                # 1. Make deep copy of the board
-                copied_board = board.create_copy()
-
-                # 2. Generate a random block
-                # Random position
-                # copied_board.size or copied_board.size - 1?
-                # copied_board.size should be safe since _get_block would
-                # return None if out of boundary
-                random_x = random.randint(0, copied_board.size)
-                random_y = random.randint(0, copied_board.size)
-                random_pos = (random_x, random_y)
-
-                # Random level
-                # where does the random level start? board.level or 0 or 1?
-                random_level = random.randint(copied_board.level,
-                                              copied_board.max_depth)
-                # Extract the temporary board
-                temp_block = _get_block(copied_board, random_pos, random_level)
-                if temp_block is None:
-                    return None
-
-                potential_moves = []
-                for value in KEY_ACTION.values():
-                    if value[0] != PASS[0]:
-                        potential_moves.append(value)
-
-                # Generating random move
-                action = random.choice(potential_moves)  # this is a tuple
-                direction = action[1]
-
-                if action in [ROTATE_CLOCKWISE, ROTATE_COUNTER_CLOCKWISE]:
-                    temp_block.rotate(direction)
-                elif action in [SWAP_HORIZONTAL, SWAP_VERTICAL]:
-                    temp_block.swap(direction)
-                elif action == SMASH:
-                    temp_block.smash()
-                elif action == PAINT:
-                    temp_block.paint(self.goal.colour)
-                elif action == COMBINE:
-                    temp_block.combine()
-                else:
-                    pass
-
-                # calculate new score
-                new_score = self.goal.score(copied_board)
-                if new_score > curr_score:
-                    if best_score is None or best_score < new_score:
-                        best_score = new_score
-                        best_move = _create_move(action, temp_block)
-
-            self._proceed = False  # Must set to False before returning!
-            if best_score is None:
-                any_block = Block((0, 0), 1, None, 0, 1)
-                return _create_move(PASS[0], any_block)
-            else:
-                return best_move
+            best_move = \
+                _create_move(best_action,
+                             _get_block(board, best_pos, best_level))
+            return best_move
 
 
-# if __name__ == '__main__':
-#     import python_ta
-#
-#     python_ta.check_all(config={
-#         'allowed-io': ['process_event'],
-#         'allowed-import-modules': [
-#             'doctest', 'python_ta', 'random', 'typing', 'actions', 'block',
-#             'goal', 'pygame', '__future__'
-#         ],
-#         'max-attributes': 10,
-#         'generated-members': 'pygame.*'
-#     })
+if __name__ == '__main__':
+    import python_ta
+
+    python_ta.check_all(config={
+        'allowed-io': ['process_event'],
+        'allowed-import-modules': [
+            'doctest', 'python_ta', 'random', 'typing', 'actions', 'block',
+            'goal', 'pygame', '__future__'
+        ],
+        'max-attributes': 10,
+        'generated-members': 'pygame.*'
+    })
