@@ -27,7 +27,7 @@ import random
 from typing import Dict, List, Tuple
 
 from block import Block
-from settings import COLOUR_LIST
+from settings import COLOUR_LIST, colour_name
 
 
 def generate_goals(num_goals: int) -> List[Goal]:
@@ -103,7 +103,7 @@ def _get_block_to_max_depth(block: Block) -> Block:
 
 
 def _get_positions_and_color_of_leaves(block: Block) -> Dict[
-        Tuple[int, int], Tuple[int, int, int]]:
+    Tuple[int, int], Tuple[int, int, int]]:
     """Return a dictionary that get map to the positions of all leaves of the
     block to its corresponding colour. The key is the position of the block as
     a (int, int) tuple while the value is the corresponding
@@ -190,7 +190,8 @@ class PerimeterGoal(Goal):
         """ Return a string that describes the perimeter goal
         """
         return 'The goal aims to calculate the total number of unit ' \
-               'cells with {0} in the perimeter'.format(self.colour)
+               'cells with {0} in the perimeter'.format(
+                colour_name(self.colour))
 
 
 class BlobGoal(Goal):
@@ -286,7 +287,7 @@ class BlobGoal(Goal):
 
     def description(self) -> str:
         return 'The goal aims for the largest \"blob\" of {0}'.format(
-            self.colour)
+            colour_name(self.colour))
 
 
 if __name__ == '__main__':
