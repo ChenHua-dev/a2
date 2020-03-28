@@ -66,8 +66,13 @@ def _flatten(block: Block) -> List[List[Tuple[int, int, int]]]:
     final_block = _get_block_to_max_depth(new_copy)
     p2c = _get_positions_and_color_of_leaves(final_block)
     positions = list(p2c.keys())
-    x_values = list(set([position[0] for position in positions]))
-    y_values = list(set([position[1] for position in positions]))
+    set_x = set()
+    set_y = set()
+    for position in positions:
+        set_x.add(position[0])
+        set_y.add(position[1])
+    x_values = list(set_x)
+    y_values = list(set_y)
     x_values.sort()
     y_values.sort()
     result = []
@@ -90,13 +95,15 @@ def _get_block_to_max_depth(block: Block) -> Block:
             child.colour = target_color
         return block
     else:
-        block.children = [_get_block_to_max_depth(child)
-                          for child in block.children]
+        new_lst = []
+        for child in block.children:
+            new_lst.append(_get_block_to_max_depth(child))
+        block.children = new_lst
         return block
 
 
 def _get_positions_and_color_of_leaves(block: Block) -> Dict[
-    Tuple[int, int], Tuple[int, int, int]]:
+        Tuple[int, int], Tuple[int, int, int]]:
     """Return a dictionary that get map to the positions of all leaves of the
     block to its corresponding colour. The key is the position of the block as
     a (int, int) tuple while the value is the corresponding
@@ -160,23 +167,39 @@ class Goal:
 
 
 class PerimeterGoal(Goal):
+    """ To calculate the score of the unit cells of target color in the side of
+    the block
+    === Attributes ===
+    colour: The target colour of the block
+    """
+    colour: Tuple[int, int, int]
+
     def score(self, board: Block) -> int:
-        result = 0
+        """ Return the score that is the side length of the unit cells with the
+        target colour in the board.
+        """
         block_flatten = _flatten(board)
         length = len(block_flatten) - 1
         left_side = [block_flatten[i][0] for i in range(length + 1)]
         right_side = [block_flatten[i][length] for i in range(length + 1)]
-        result += (left_side.count(self.colour) + right_side.count(self.colour)
-                   + block_flatten[0].count(self.colour) +
-                   block_flatten[length].count(self.colour))
-        return result
+        return (left_side.count(self.colour) + right_side.count(self.colour)
+                + block_flatten[0].count(self.colour) +
+                block_flatten[length].count(self.colour))
 
     def description(self) -> str:
+        """ Return a string that describes the perimeter goal
+        """
         return 'The goal aims to calculate the total number of unit ' \
                'cells with {0} in the perimeter'.format(self.colour)
 
 
 class BlobGoal(Goal):
+    """ To calculate the score of the target colour by the largest blob
+    === Attributes ===
+    colour: The target colour of the block
+    """
+    colour: Tuple[int, int, int]
+
     def score(self, board: Block) -> int:
         """ Return the max scores of the blod with <self.colour> that
         is with the max size in <board>.
@@ -260,7 +283,6 @@ class BlobGoal(Goal):
             else:
                 visited[surround[0]][surround[1]] = 0
             self._update_visited(surround, board, visited, color_pos)
-        return None
 
     def description(self) -> str:
         return 'The goal aims for the largest \"blob\" of {0}'.format(

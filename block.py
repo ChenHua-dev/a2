@@ -25,7 +25,7 @@ from __future__ import annotations
 
 import random
 from typing import List, Optional, Tuple
-
+import math
 from settings import COLOUR_LIST, colour_name
 
 
@@ -217,18 +217,42 @@ class Block:
         if self.smashable():
             get_positions = self._children_positions()
             get_size = self._child_size()
-            get_colors = [random.choice(COLOUR_LIST),
-                          random.choice(COLOUR_LIST),
-                          random.choice(COLOUR_LIST),
-                          random.choice(COLOUR_LIST)]
             self.colour = None
             get_level = self.level + 1
             for i in range(4):
                 self.children.append(
-                    Block(get_positions[i], get_size, get_colors[i], get_level,
+                    Block(get_positions[i], get_size, None, get_level,
                           self.max_depth))
+            for child in self.children:
+                child._smash_child()
             return True
         return False
+
+    def _smash_child(self) -> None:
+        """Generate a random number. Subdivide the block if the block is
+        smashable and the random_num is less than math.exp(-0.25*self.level)
+        Otherwise, randomly choose a color in the COLOR_LIST and put it
+        into the block
+        """
+        random_num = random.random()
+        if random_num < math.exp(-0.25*self.level) and self.smashable():
+            get_positions = self._children_positions()
+            get_size = self._child_size()
+            self.colour = None
+            get_level = self.level + 1
+            for i in range(4):
+                self.children.append(
+                    Block(get_positions[i], get_size, None, get_level,
+                          self.max_depth))
+            for child in self.children:
+                child._smash_child()
+        else:
+            random_int = random.randint(0, 3)
+            get_color = COLOUR_LIST[random_int]
+            self.colour = get_color
+
+
+
 
     def swap(self, direction: int) -> bool:
         """Swap the child Blocks of this Block.
@@ -342,7 +366,7 @@ class Block:
         Return True iff this Block was turned into a leaf node.
         """
         majority_color = self._get_majority_color()
-        if majority_color is None or (self.level == self.max_depth - 1) or \
+        if majority_color is None or (self.level != self.max_depth - 1) or \
                 not self.children:
             return False
         else:

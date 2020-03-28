@@ -151,15 +151,16 @@ def _create_move(action: Tuple[str, Optional[int]], block: Block) -> \
 
 class HumanPlayer(Player):
     """A human player.
+
+     === Private Attributes ===
+     _level:
+         The level of the Block that the user selected most recently.
+     _desired_action:
+         The most recent action that the user is attempting to do.
+
+     == Representation Invariants concerning the private attributes ==
+         _level >= 0
     """
-    # === Private Attributes ===
-    # _level:
-    #     The level of the Block that the user selected most recently.
-    # _desired_action:
-    #     The most recent action that the user is attempting to do.
-    #
-    # == Representation Invariants concerning the private attributes ==
-    #     _level >= 0
     _level: int
     _desired_action: Optional[Tuple[str, Optional[int]]]
 
@@ -219,10 +220,12 @@ class HumanPlayer(Player):
 
 
 class RandomPlayer(Player):
-    # === Private Attributes ===
-    # _proceed:
-    #   True when the player should make a move, False when the player should
-    #   wait.
+    """ Generate a random player
+     === Private Attributes ===
+     _proceed:
+       True when the player should make a move, False when the player should
+       wait.
+    """
     _proceed: bool
 
     def __init__(self, player_id: int, goal: Goal) -> None:
@@ -260,16 +263,24 @@ class RandomPlayer(Player):
 
 
 class SmartPlayer(Player):
-    # === Private Attributes ===
-    # _proceed:
-    #   True when the player should make a move, False when the player should
-    #   wait.
+    """ Generate a smart player
+     === Private Attributes ===
+     _proceed:
+       True when the player should make a move, False when the player should
+       wait.
+
+     _difficulty:
+       A integer that shows the number of moves a smart player can generate for
+       each turn
+
+    """
     _proceed: bool
+    _difficulty: int
 
     def __init__(self, player_id: int, goal: Goal, difficulty: int) -> None:
         self.id = player_id
         self.goal = goal
-        self.difficulty = difficulty
+        self._difficulty = difficulty
         self._proceed = False
 
     def get_selected_block(self, board: Block) -> Optional[Block]:
@@ -295,7 +306,7 @@ class SmartPlayer(Player):
             return None  # Do not remove
         actions = list(KEY_ACTION.values())
         mark_to_action = {}
-        for _ in range(self.difficulty):
+        for _ in range(self._difficulty):
             board_copy = board.create_copy()
             original_mark = self.goal.score(board_copy)
             random_action = random.choice(actions)  # (str_action, direction)
