@@ -50,6 +50,23 @@ def generate_board(max_depth: int, size: int) -> Block:
 # max_depth = 3
 # generate_board(3, 750)
 # board = Block((0, 0), 750, random.choice(COLOUR_LIST), 0, 3)
+# from block import random as a2_random
+# SEED_NUMBER = 1214
+# random.seed(SEED_NUMBER)
+# a2_random.seed(SEED_NUMBER)
+# def block_bfs(block):
+#     res = []
+#     acc = [block]
+#     while acc:
+#         temp = acc.pop(0)
+#         res.append(temp)
+#         for child in temp.children:
+#             acc.append(child)
+#     return res
+
+# temp = Block((0, 0), 100, None, 0, 2)
+# temp.smash()
+# bfs = block_bfs(temp)
 
 
 class Block:
@@ -227,10 +244,12 @@ class Block:
             else create generated block colour with random.choice(COLOUR_LIST)
         """
         curr_size = round(size / 2.0)
+        parent_level = level - 1
         block = Block((0, 0), curr_size, None, level, max_depth)
-        if level < max_depth:  # when level < max_depth
+        if block.smashable():
+        # if level < max_depth:  # when level < max_depth
             rn = random.random()
-            if rn < math.exp(-0.25 * level):  # subdivide further
+            if rn < math.exp(-0.25 * parent_level): # subdivide further
                 child_0 = self._smash_helper(curr_size, level + 1, max_depth)
                 child_1 = self._smash_helper(curr_size, level + 1, max_depth)
                 child_2 = self._smash_helper(curr_size, level + 1, max_depth)
@@ -268,7 +287,6 @@ class Block:
             child_1 = self._smash_helper(size, child_level, max_depth)
             child_2 = self._smash_helper(size, child_level, max_depth)
             child_3 = self._smash_helper(size, child_level, max_depth)
-
             self.children = [child_0, child_1, child_2, child_3]
             self._update_children_positions(self.position)
             return True
@@ -349,19 +367,30 @@ class Block:
     def paint(self, colour: Tuple[int, int, int]) -> bool:
         """Change this Block's colour iff it is a leaf at a level of max_depth
         and its colour is different from <colour>.
-
         Return True iff this Block's colour was changed.
         """
-        # TODO: Implement me
-        if self.level == self.max_depth:
-            # check if this is a leaf
-            if len(self.children) != 0:
-                return False
-            else:  # elif len(self.children) == 0:
-                if self.colour != colour:
-                    self.colour = colour
-                return True
+        if not self.children and self.level == self.max_depth \
+                and self.colour != colour:
+            self.colour = colour
+            return True
         return False
+
+    # def paint(self, colour: Tuple[int, int, int]) -> bool:
+    #     """Change this Block's colour iff it is a leaf at a level of max_depth
+    #     and its colour is different from <colour>.
+    #
+    #     Return True iff this Block's colour was changed.
+    #     """
+    #     # TODO: Implement me
+    #     if self.level == self.max_depth:
+    #         # check if this is a leaf
+    #         if len(self.children) != 0:
+    #             return False
+    #         else:  # elif len(self.children) == 0:
+    #             if self.colour != colour:
+    #                 self.colour = colour
+    #             return True
+    #     return False
 
     def combine(self) -> bool:
         """Turn this Block into a leaf based on the majority colour of its
@@ -378,32 +407,30 @@ class Block:
         """
         # TODO: Implement me
         if self.level == self.max_depth - 1 and len(self.children) == 4:
-            # calculating majority
-            colour_tuple = [child.colour for child in self.children]
-            acc = []
-            for c in COLOUR_LIST:
-                acc.append(colour_tuple.count(c))
+            # 1. Calculating colour frequency
+            colour_count = {}
+            for child in self.children:
+                if child.colour not in colour_count:
+                    colour_count[child.colour] = [child.colour, 1]
+                else:
+                    colour_count[child.colour][1] += 1
 
-            if max(acc) == 1:
+            # 2. Extract colour max occurrence
+            colour_list = list(colour_count.values())
+            max_occur = max(colour_list, key=lambda x: x[1])
+            acc = 0
+            for item in colour_list:
+                if item[1] == max_occur[1]:
+                    acc += 1
+            # if max occurrence occurs more than 1 time
+            if acc > 1:
                 return False
-            if max(acc) == 2 and acc.count(2) == 2:
-                return False
-            if max(acc) == 2 and acc.count(2) != 2:
-                colour_index = acc.index(max(acc))
-                self.colour = colour_tuple[colour_index]
+            else:
+                self.colour = max_occur[0]
                 self.children = []
                 return True
-            if max(acc) == 3:
-                colour_index = acc.index(max(acc))
-                self.colour = colour_tuple[colour_index]
-                self.children = []
-                return True
-            if max(acc) == 4:
-                colour_index = acc.index(max(acc))
-                self.colour = colour_tuple[colour_index]
-                self.children = []
-                return True
-        return False
+        else:
+            return False
 
     def create_copy(self) -> Block:
         """Return a new Block that is a deep copy of this Block.

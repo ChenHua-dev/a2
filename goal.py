@@ -28,8 +28,6 @@ from typing import List, Tuple
 from block import Block
 from settings import colour_name, COLOUR_LIST
 
-# COLOUR_LIST = [PACIFIC_POINT, REAL_RED, OLD_OLIVE, DAFFODIL_DELIGHT]
-
 
 def generate_goals(num_goals: int) -> List[Goal]:
     """Return a randomly generated list of goals with length num_goals.
@@ -56,15 +54,13 @@ def generate_goals(num_goals: int) -> List[Goal]:
             s.append(PerimeterGoal(COLOUR_LIST[temp]))
             index_list.remove(temp)
         return s
-    elif rn == 1:
+    else:  # elif rn == 1:
         s = []
         for _ in range(num_goals):
             temp = random.choice(index_list)
             s.append(BlobGoal(COLOUR_LIST[temp]))
             index_list.remove(temp)
         return s
-    else:
-        pass
 
 
 def _flatten(block: Block) -> List[List[Tuple[int, int, int]]]:
@@ -83,11 +79,11 @@ def _flatten(block: Block) -> List[List[Tuple[int, int, int]]]:
     """
     # TODO: Implement me
     # Base case: when there is no children
-    if block.children == []:
+    if len(block.children) == 0:
         lst = []
-        for _ in range(2 ** (block.max_depth - block.level)):
+        for _ in range(int(math.pow(2, block.max_depth - block.level))):
             column = []
-            for _ in range(2 ** (block.max_depth - block.level)):
+            for _ in range(int(math.pow(2, block.max_depth - block.level))):
                 column.append(block.colour)
             lst.append(column)
         return lst
@@ -96,13 +92,13 @@ def _flatten(block: Block) -> List[List[Tuple[int, int, int]]]:
         # List for return in the recursive case
         # Parent block
         acc = []
-        for _ in range(2 ** (block.max_depth - block.level)):
+        for _ in range(int(math.pow(2, block.max_depth - block.level))):
             column = []
-            for _ in range(2 ** (block.max_depth - block.level)):
+            for _ in range(int(math.pow(2, block.max_depth - block.level))):
                 column.append(None)
             acc.append(column)
 
-        child_size = (2 ** (block.max_depth - block.level)) // 2
+        child_size = round((math.pow(2, block.max_depth - block.level)) / 2.0)
         # Gather flattened block from child 0
         flattened_child_0 = _flatten(block.children[0])
         for i in range(child_size):
@@ -206,7 +202,7 @@ class PerimeterGoal(Goal):
 class BlobGoal(Goal):
     def score(self, board: Block) -> int:
         # TODO: Implement me
-        # flattening the tree/block
+        # # flattening the tree/block
         flat_board = _flatten(board)
         col_size = len(flat_board)
         row_size = len(flat_board)
@@ -218,16 +214,14 @@ class BlobGoal(Goal):
                 column.append(-1)
             matrix.append(column)
 
-        # s = []
         max_score = None
         for i in range(col_size):
             for j in range(row_size):
                 pos = (i, j)
                 temp = self._undiscovered_blob_size(pos, flat_board, matrix)
-                # s.append(temp)
                 if max_score is None or max_score < temp:
                     max_score = temp
-        return max_score  # max(s)
+        return max_score
 
     def _undiscovered_blob_size(self, pos: Tuple[int, int],
                                 board: List[List[Tuple[int, int, int]]],
@@ -260,21 +254,19 @@ class BlobGoal(Goal):
             return 0
         if visited[i][j] == 0 or visited[i][j] == 1:
             return 0
-        else: # within bound and the current cell hasn't been visited
+        else:  # within bound and the current cell hasn't been visited
             # if current cell's colour is not the same as target colour
             if board[i][j] != self.colour:
                 visited[i][j] = 0
                 return 0
-            # if current cell's colour is the same as target colour
-            else:
+            else:  # if current cell's colour is the same as target colour
                 visited[i][j] = 1
-                acc = 1
-                # upper, lower, left, right connected unit cells, respectively
-                acc += self._undiscovered_blob_size((i-1, j), board, visited)
-                acc += self._undiscovered_blob_size((i+1, j), board, visited)
-                acc += self._undiscovered_blob_size((i, j-1), board, visited)
-                acc += self._undiscovered_blob_size((i, j+1), board, visited)
-                return acc
+                # # upper, lower, left, right connected unit cells, respectively
+                upper = self._undiscovered_blob_size((i-1, j), board, visited)
+                lower = self._undiscovered_blob_size((i+1, j), board, visited)
+                left = self._undiscovered_blob_size((i, j-1), board, visited)
+                right = self._undiscovered_blob_size((i, j+1), board, visited)
+                return 1 + upper + lower + left + right
 
     def description(self) -> str:
         # TODO: Implement me
@@ -282,12 +274,12 @@ class BlobGoal(Goal):
                'blob of blocks using the target colour'
 
 
-# if __name__ == '__main__':
-#     import python_ta
-#     python_ta.check_all(config={
-#         'allowed-import-modules': [
-#             'doctest', 'python_ta', 'random', 'typing', 'block', 'settings',
-#             'math', '__future__'
-#         ],
-#         'max-attributes': 15
-#     })
+if __name__ == '__main__':
+    import python_ta
+    python_ta.check_all(config={
+        'allowed-import-modules': [
+            'doctest', 'python_ta', 'random', 'typing', 'block', 'settings',
+            'math', '__future__'
+        ],
+        'max-attributes': 15
+    })

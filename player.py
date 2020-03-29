@@ -98,7 +98,8 @@ def _get_block(block: Block, location: Tuple[int, int], level: int) -> \
     target_x = location[0]
     target_y = location[1]
 
-    if x <= target_x < x + 2 * d and y <= target_y < y + 2 * d:
+    # if x <= target_x < x + 2 * d and y <= target_y < y + 2 * d:
+    if x <= target_x < x + block.size and y <= target_y < y + block.size:
         if len(block.children) == 0:
             return block
         elif level == 0:
@@ -110,9 +111,10 @@ def _get_block(block: Block, location: Tuple[int, int], level: int) -> \
                 return _get_block(block.children[1], location, level - 1)
             elif target_x < x + d and target_y >= y + d:
                 return _get_block(block.children[2], location, level - 1)
-            else:
-            # elif target_x >= x + d and target_y >= y + d:
+            elif target_x >= x + d and target_y >= y + d:
                 return _get_block(block.children[3], location, level - 1)
+            else:
+                return None
     else:
         return None
 
@@ -127,8 +129,12 @@ def _generate_random_block(board: Block) -> \
 
     # Random position
     # copied_board.size or copied_board.size - 1?
-    random_x = random.randint(0, copied_board.size)
-    random_y = random.randint(0, copied_board.size)
+    random_x = random.randint(copied_board.position[0],
+                              copied_board.position[0] + copied_board.size - 1)
+    random_y = random.randint(copied_board.position[1],
+                              copied_board.position[1] + copied_board.size - 1)
+    # random_x = random.randint(0, copied_board.size - 1)
+    # random_y = random.randint(0, copied_board.size - 1)
     random_pos = (random_x, random_y)
 
     # Random level
@@ -145,6 +151,7 @@ def _generate_random_move(actions: Dict[int, Tuple[str, Optional[int]]]) -> \
     # Generating random move
     potential_moves = []
     for value in actions.values():
+        # potential_moves.append(value)
         if value[0] != PASS[0]:
             potential_moves.append(value)
     # Generating random move, which is a tuple

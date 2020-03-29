@@ -49,7 +49,7 @@ def _block_to_squares(board: Block) -> List[Tuple[Tuple[int, int, int],
     The order of the squares does not matter.
     """
     # TODO: Implement me
-    if board.children == []:
+    if len(board.children) == 0:
         curr_colour = board.colour
         curr_position = board.position
         curr_size = board.size
@@ -57,8 +57,6 @@ def _block_to_squares(board: Block) -> List[Tuple[Tuple[int, int, int],
     else:
         s = []
         for child in board.children:
-            # if child:
-            # if child.colour is not None:  # why this is wrong
             s += _block_to_squares(child)
         return s
 
@@ -370,14 +368,14 @@ class GameOverState(GameState):
         renderer.print(f'Player {self._winner} wins!', x, y)
 
 
-# if __name__ == '__main__':
-#     import python_ta
-#
-#     python_ta.check_all(config={
-#         'allowed-io': ['run_game'],
-#         'allowed-import-modules': [
-#             'doctest', 'python_ta', 'random', 'typing', 'pygame', '__future__',
-#             'block', 'player', 'renderer', 'settings', 'actions'
-#         ],
-#         'generated-members': 'pygame.*'
-#     })
+if __name__ == '__main__':
+    import python_ta
+
+    python_ta.check_all(config={
+        'allowed-io': ['run_game'],
+        'allowed-import-modules': [
+            'doctest', 'python_ta', 'random', 'typing', 'pygame', '__future__',
+            'block', 'player', 'renderer', 'settings', 'actions'
+        ],
+        'generated-members': 'pygame.*'
+    })
