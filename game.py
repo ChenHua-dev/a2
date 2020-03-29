@@ -118,15 +118,15 @@ def create_sample_game() -> Game:
 
 
 if __name__ == '__main__':
-    import python_ta
-    python_ta.check_all(config={
-        'allowed-io': ['run_game'],
-        'allowed-import-modules': [
-            'doctest', 'python_ta', 'random', 'typing', 'pygame', 'blocky',
-            'block', 'goal', 'player', 'renderer', 'settings'
-        ],
-        'generated-members': 'pygame.*'
-    })
+    # import python_ta
+    # python_ta.check_all(config={
+    #     'allowed-io': ['run_game'],
+    #     'allowed-import-modules': [
+    #         'doctest', 'python_ta', 'random', 'typing', 'pygame', 'blocky',
+    #         'block', 'goal', 'player', 'renderer', 'settings'
+    #     ],
+    #     'generated-members': 'pygame.*'
+    # })
 
     pygame.init()
 
@@ -135,7 +135,7 @@ if __name__ == '__main__':
     import random
     random.seed(1001)
 
-    game = create_sample_game()
+    game = create_sample_game()  # Human, Random, Smart
     #game = create_auto_game()
     #game = create_two_player_game()
     #game = create_solitaire_game()

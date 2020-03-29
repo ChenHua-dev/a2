@@ -23,9 +23,10 @@ This file contains the Block class, the main data structure used in the game.
 """
 from __future__ import annotations
 
+import math
 import random
 from typing import List, Optional, Tuple
-import math
+
 from settings import COLOUR_LIST, colour_name
 
 
@@ -195,7 +196,6 @@ class Block:
             for i in range(len(self.children)):
                 self.children[i]._update_children_positions(
                     get_children_positions[i])
-        return None
 
     def smashable(self) -> bool:
         """Return True iff this block can be smashed.
@@ -235,7 +235,7 @@ class Block:
         into the block
         """
         random_num = random.random()
-        if random_num < math.exp(-0.25*self.level) and self.smashable():
+        if random_num < math.exp(-0.25 * (self.level - 1)) and self.smashable():
             get_positions = self._children_positions()
             get_size = self._child_size()
             self.colour = None
@@ -250,9 +250,6 @@ class Block:
             random_int = random.randint(0, 3)
             get_color = COLOUR_LIST[random_int]
             self.colour = get_color
-
-
-
 
     def swap(self, direction: int) -> bool:
         """Swap the child Blocks of this Block.

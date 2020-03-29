@@ -41,11 +41,19 @@ def generate_goals(num_goals: int) -> List[Goal]:
         - num_goals <= len(COLOUR_LIST)
     """
     num_choose = random.randint(1, 2)
+    color_copy = COLOUR_LIST[:]
+    result = []
     if num_choose == 1:
-        return [PerimeterGoal(random.choice(COLOUR_LIST)) for _ in
-                range(num_goals)]
+        for _ in range(num_goals):
+            get_color = random.choice(color_copy)
+            color_copy.remove(get_color)
+            result.append(PerimeterGoal(get_color))
     else:
-        return [BlobGoal(random.choice(COLOUR_LIST)) for _ in range(num_goals)]
+        for _ in range(num_goals):
+            get_color = random.choice(color_copy)
+            color_copy.remove(get_color)
+            result.append(BlobGoal(get_color))
+    return result
 
 
 def _flatten(block: Block) -> List[List[Tuple[int, int, int]]]:
@@ -90,9 +98,21 @@ def _get_block_to_max_depth(block: Block) -> Block:
     smash it into children with 4 same color as the original block"""
     if not block.children and block.level < block.max_depth:
         target_color = block.colour
-        block.smash()
-        for child in block.children:
-            child.colour = target_color
+        block.colour = None
+        x = block.position[0]
+        y = block.position[1]
+        d = block.size / 2.0
+        child0 = Block((x + d, y), d, target_color, block.level + 1,
+                       block.max_depth)
+        child1 = Block((x, y), d, target_color, block.level + 1,
+                       block.max_depth)
+        child2 = Block((x, y + d), d, target_color, block.level + 1,
+                       block.max_depth)
+        child3 = Block((x + d, y + d), d, target_color, block.level + 1,
+                       block.max_depth)
+        block.children = [child0, child1, child2, child3]
+        for i in range(4):
+            block.children[i] = _get_block_to_max_depth(block.children[i])
         return block
     else:
         new_lst = []
@@ -103,36 +123,19 @@ def _get_block_to_max_depth(block: Block) -> Block:
 
 
 def _get_positions_and_color_of_leaves(block: Block) -> Dict[
-    Tuple[int, int], Tuple[int, int, int]]:
+        Tuple[int, int], Tuple[int, int, int]]:
     """Return a dictionary that get map to the positions of all leaves of the
     block to its corresponding colour. The key is the position of the block as
     a (int, int) tuple while the value is the corresponding
     colour of this block
     """
-    if not block.children:
+    if block.level == block.max_depth:
         return {block.position: block.colour}
     else:
         result = {}
         for child in block.children:
             new_dict = _get_positions_and_color_of_leaves(child)
-            for key in new_dict:
-                result[key] = new_dict[key]
-        return result
-
-
-def _get_position_block(block: Block) -> Dict[Tuple[int, int], Block]:
-    """ Return a dictionary that maps the positions of all colored blocks in
-    <block> to the related block. The key is the position tuple and the value is
-    the related block
-    """
-    if not block.children:
-        return {block.position: block}
-    else:
-        result = {}
-        for child in block.children:
-            to_add = _get_position_block(child)
-            for key in to_add:
-                result[key] = to_add[key]
+            result.update(new_dict)
         return result
 
 
@@ -191,7 +194,7 @@ class PerimeterGoal(Goal):
         """
         return 'The goal aims to calculate the total number of unit ' \
                'cells with {0} in the perimeter'.format(
-                colour_name(self.colour))
+                   colour_name(self.colour))
 
 
 class BlobGoal(Goal):

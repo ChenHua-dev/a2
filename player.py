@@ -50,10 +50,10 @@ def create_players(num_human: int, num_random: int, smart_players: List[int]) \
     for i in range(num_human):
         players.append(HumanPlayer(i, goals[i]))
     for i in range(num_human, num_human + num_random):
-        players.append(RandomPlayer(i + 10, goals[i]))
+        players.append(RandomPlayer(i, goals[i]))
     for i in range(len(smart_players)):
         players.append(
-            SmartPlayer(i + num_human + num_random + 100,
+            SmartPlayer(i + num_human + num_random,
                         goals[i + num_human + num_random], smart_players[i]))
     return players
 
@@ -254,12 +254,28 @@ class RandomPlayer(Player):
         actions = list(KEY_ACTION.values())
         random_action = random.choice(actions)  # (str_action, direction)
         random_pos = (
-            random.randint(0, board.size - 1),
-            random.randint(0, board.size - 1))
-        random_block = _get_block(board, random_pos,
-                                  random.randint(0, board.max_depth))
-        self._proceed = False
-        return _create_move(random_action, random_block)
+            random.randint(board.position[0],
+                           board.position[0] + board.size - 1),
+            random.randint(board.position[1],
+                           board.position[1] + board.size - 1))
+        board_copy = board.create_copy()
+        get_level = random.randint(board.level, board.max_depth)
+        random_block = _get_block(board_copy, random_pos, get_level)
+        block_return = _get_block(board, random_pos, get_level)
+        if random_block is None:
+            return self.generate_move(board)
+        elif (random_action[0] == 'rotate' and random_block.rotate(
+                random_action[1])) \
+                or (random_action[0] == 'swap' and random_block.swap(
+                    random_action[1])) \
+                or (random_action[0] == 'smash' and random_block.smash()) \
+                or (random_action[0] == 'combine' and random_block.combine()) \
+                or (random_action[0] == 'paint' and random_block.paint(
+                    self.goal.colour)):
+            self._proceed = False
+            return _create_move(random_action, block_return)
+        else:
+            return self.generate_move(board)
 
 
 class SmartPlayer(Player):
@@ -310,38 +326,32 @@ class SmartPlayer(Player):
             board_copy = board.create_copy()
             original_mark = self.goal.score(board_copy)
             random_action = random.choice(actions)  # (str_action, direction)
-            random_pos = (
-                random.randint(0, board.size - 1),
-                random.randint(0, board.size - 1))
-            random_block = _get_block(board_copy, random_pos,
-                                      random.randint(0, board.max_depth))
-            block_return = _get_block(board, random_pos,
-                                      random.randint(0, board.max_depth))
-            if random_action[0] == 'rotate' and random_block.rotate(
-                    random_action[1]):
+            x = random.randint(board.position[0],
+                               board.position[0] + board.size - 1)
+            y = random.randint(board.position[1],
+                               board.position[1] + board.size - 1)
+            random_pos = (x, y)
+            get_level = random.randint(0, board.max_depth)
+            random_block = _get_block(board_copy, random_pos, get_level)
+            block_return = _get_block(board, random_pos, get_level)
+            if random_block is None:
                 mark_to_action[
-                    self.goal.score(board_copy) - original_mark] = _create_move(
-                    random_action, block_return)
-            elif random_action[0] == 'swap' and random_block.swap(random_action[1]):
-                mark_to_action[
-                    self.goal.score(board_copy) - original_mark] = _create_move(
-                    random_action, block_return)
-            elif random_action[0] == 'smash' and random_block.smash():
-                mark_to_action[
-                    self.goal.score(board_copy) - original_mark] = _create_move(
-                    random_action, block_return)
-            elif random_action[0] == 'combine' and random_block.combine():
-                mark_to_action[
-                    self.goal.score(board_copy) - original_mark] = _create_move(
-                    random_action, block_return)
-            elif random_action[0] == 'paint' and random_block.paint(
-                    self.goal.colour):
-                mark_to_action[
-                    self.goal.score(board_copy) - original_mark] = _create_move(
-                    random_action, block_return)
+                    self.goal.score(board_copy) - original_mark] = \
+                    _create_move(KEY_ACTION[pygame.K_TAB], board)
+            elif (random_action[0] == 'rotate' and random_block.rotate(
+                    random_action[1])) \
+                    or (random_action[0] == 'swap' and random_block.swap(
+                        random_action[1])) \
+                    or (random_action[0] == 'smash' and random_block.smash()) \
+                    or (random_action[0] == 'combine' and
+                        random_block.combine()) \
+                    or (random_action[0] == 'paint' and random_block.paint(
+                        self.goal.colour)):
+                mark_to_action[self.goal.score(board_copy) - original_mark] \
+                    = _create_move(random_action, block_return)
         marks = list(mark_to_action.keys())
         self._proceed = False  # Must set to False before returning!
-        if max(marks) > 0:
+        if len(marks) != 0 and max(marks) > 0:
             return mark_to_action[max(marks)]
         return _create_move(KEY_ACTION[pygame.K_TAB], board)
 
