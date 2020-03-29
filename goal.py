@@ -24,7 +24,7 @@ This file contains the hierarchy of Goal classes.
 from __future__ import annotations
 import math
 import random
-from typing import List, Tuple
+from typing import List, Tuple, Any, Optional
 from block import Block
 from settings import colour_name, COLOUR_LIST
 
@@ -63,6 +63,37 @@ def generate_goals(num_goals: int) -> List[Goal]:
         return s
 
 
+def _generate_square_matrix(matrix_size: int, content: Any) -> List[List[Any]]:
+    """Return ...
+
+    """
+    square_matrix = []
+    for _ in range(matrix_size):
+        column = []
+        for _ in range(matrix_size):
+            column.append(content)
+        square_matrix.append(column)
+    return square_matrix
+
+
+def _distribute_colours(accumulator: List[List[Optional[Tuple[int, int, int]]]],
+                        colour_matrix: List[List[Tuple[int, int, int]]],
+                        size: int, children_index: int) -> None:
+    """Assign ...
+
+    """
+    for i in range(size):
+        for j in range(size):
+            if children_index == 0:
+                accumulator[i+size][j] = colour_matrix[i][j]
+            if children_index == 1:
+                accumulator[i][j] = colour_matrix[i][j]
+            if children_index == 2:
+                accumulator[i][j+size] = colour_matrix[i][j]
+            if children_index == 3:
+                accumulator[i+size][j+size] = colour_matrix[i][j]
+
+
 def _flatten(block: Block) -> List[List[Tuple[int, int, int]]]:
     """Return a two-dimensional list representing <block> as rows and columns of
     unit cells.
@@ -80,66 +111,20 @@ def _flatten(block: Block) -> List[List[Tuple[int, int, int]]]:
     # TODO: Implement me
     # Base case: when there is no children
     if len(block.children) == 0:
-        lst = []
-        for _ in range(int(math.pow(2, block.max_depth - block.level))):
-            column = []
-            for _ in range(int(math.pow(2, block.max_depth - block.level))):
-                column.append(block.colour)
-            lst.append(column)
-        return lst
-    # Recursive case: where there are children under tree node (internal node)
+        cell_size = int(math.pow(2, block.max_depth - block.level))
+        square_matrix = _generate_square_matrix(cell_size, block.colour)
+        return square_matrix
+    # Recursive case: when there are children under internal node
     else:
-        # List for return in the recursive case
-        # Parent block
-        acc = []
-        for _ in range(int(math.pow(2, block.max_depth - block.level))):
-            column = []
-            for _ in range(int(math.pow(2, block.max_depth - block.level))):
-                column.append(None)
-            acc.append(column)
-
-        child_size = round((math.pow(2, block.max_depth - block.level)) / 2.0)
-        # Gather flattened block from child 0
-        flattened_child_0 = _flatten(block.children[0])
-        for i in range(child_size):
-            for j in range(child_size):
-                acc[i + child_size][j] = flattened_child_0[i][j]
-
-        # Gather flattened block from child 1
-        flattened_child_1 = _flatten(block.children[1])
-        for i in range(child_size):
-            for j in range(child_size):
-                acc[i][j] = flattened_child_1[i][j]
-
-        # Gather flattened block from child 2
-        flattened_child_2 = _flatten(block.children[2])
-        for i in range(child_size):
-            for j in range(child_size):
-                acc[i][j + child_size] = flattened_child_2[i][j]
-
-        # Gather flattened block from child 3
-        flattened_child_3 = _flatten(block.children[3])
-        for i in range(child_size):
-            for j in range(child_size):
-                acc[i + child_size][j + child_size] = flattened_child_3[i][j]
-
+        block_size = int(math.pow(2, block.max_depth - block.level))
+        child_size = round(block_size / 2.0)
+        # List for return in the recursive case from Parent block
+        acc = _generate_square_matrix(block_size, None)
+        for i in range(len(block.children)):
+            # Gather flattened block from child
+            flattened_child = _flatten(block.children[i])
+            _distribute_colours(acc, flattened_child, child_size, i)
         return acc
-    # board = Block((0, 0), 750, None, 0, 2)
-    #
-    # # Level 1
-    # colours = [None, COLOUR_LIST[2], COLOUR_LIST[1], COLOUR_LIST[3]]
-    # set_children(board, colours)
-    #
-    # # Level 2
-    # colours = [COLOUR_LIST[0], COLOUR_LIST[1], COLOUR_LIST[1], COLOUR_LIST[3]]
-    # set_children(board.children[0], colours)
-    #
-    # [
-    #     [COLOUR_LIST[2], COLOUR_LIST[2], COLOUR_LIST[1], COLOUR_LIST[1]],
-    #     [COLOUR_LIST[2], COLOUR_LIST[2], COLOUR_LIST[1], COLOUR_LIST[1]],
-    #     [COLOUR_LIST[1], COLOUR_LIST[1], COLOUR_LIST[3], COLOUR_LIST[3]],
-    #     [COLOUR_LIST[0], COLOUR_LIST[3], COLOUR_LIST[3], COLOUR_LIST[3]]
-    # ]
 
 
 class Goal:
@@ -195,8 +180,9 @@ class PerimeterGoal(Goal):
 
     def description(self) -> str:
         # TODO: Implement me
-        return 'Player creates the largest possible ' \
-               'perimeter of the board using the target colour'
+        colour = colour_name(self.colour)
+        return 'The goal aims to calculate the total number of unit ' \
+               'cells with coloour {0} in the perimeter'.format(colour)
 
 
 class BlobGoal(Goal):
@@ -204,21 +190,15 @@ class BlobGoal(Goal):
         # TODO: Implement me
         # # flattening the tree/block
         flat_board = _flatten(board)
-        col_size = len(flat_board)
-        row_size = len(flat_board)
-
-        matrix = []
-        for _ in range(col_size):
-            column = []
-            for _ in range(row_size):
-                column.append(-1)
-            matrix.append(column)
+        size = len(flat_board)
+        unvisited_cells = _generate_square_matrix(size, -1)
 
         max_score = None
-        for i in range(col_size):
-            for j in range(row_size):
+        for i in range(size):
+            for j in range(size):
                 pos = (i, j)
-                temp = self._undiscovered_blob_size(pos, flat_board, matrix)
+                temp = self._undiscovered_blob_size(pos, flat_board,
+                                                    unvisited_cells)
                 if max_score is None or max_score < temp:
                     max_score = temp
         return max_score
@@ -261,7 +241,7 @@ class BlobGoal(Goal):
                 return 0
             else:  # if current cell's colour is the same as target colour
                 visited[i][j] = 1
-                # # upper, lower, left, right connected unit cells, respectively
+                # upper, lower, left, right connected unit cells, respectively
                 upper = self._undiscovered_blob_size((i-1, j), board, visited)
                 lower = self._undiscovered_blob_size((i+1, j), board, visited)
                 left = self._undiscovered_blob_size((i, j-1), board, visited)
@@ -270,8 +250,9 @@ class BlobGoal(Goal):
 
     def description(self) -> str:
         # TODO: Implement me
+        colour = colour_name(self.colour)
         return 'Player creates the largest possible ' \
-               'blob of blocks using the target colour'
+               'blob of blocks using colour of {0}'.format(colour)
 
 
 if __name__ == '__main__':
