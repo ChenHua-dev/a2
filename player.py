@@ -87,7 +87,6 @@ def _get_block(block: Block, location: Tuple[int, int], level: int) -> \
 
     Preconditions:
         - 0 <= level <= max_depth
-        - block.level <= level <= max_depth
     """
     # TODO: Implement me
     # block attributes
@@ -150,7 +149,7 @@ def _generate_random_block(board: Block) -> \
 
 def _generate_random_move(actions: Dict[int, Tuple[str, Optional[int]]]) -> \
         Tuple[str, Optional[int]]:
-    """Return a randomly generated action from <actions>
+    """Return a randomly generated action from <actions>, except for PASS.
     """
     # Generating random move
     potential_moves = []
@@ -211,6 +210,13 @@ class Player:
 
 def _create_move(action: Tuple[str, Optional[int]], block: Block) -> \
         Tuple[str, Optional[int], Block]:
+    """Return string of description of <action> and possible direction of
+    <action>, and <block> that <action> will be applied to.
+
+    Note:
+        - direction located at index 1 of <action> could be None
+
+    """
     return action[0], action[1], block
 
 
@@ -294,6 +300,9 @@ class RandomPlayer(Player):
     _proceed: bool
 
     def __init__(self, player_id: int, goal: Goal) -> None:
+        """Initialize this RandomPlayer with the given <player_id>, <goal> and
+        initialize <_proceed> to False
+        """
         # TODO: Implement Me
         Player.__init__(self, player_id, goal)
         self._proceed = False
@@ -351,6 +360,10 @@ class SmartPlayer(Player):
     _difficulty: int
 
     def __init__(self, player_id: int, goal: Goal, difficulty: int) -> None:
+        """Initialize this SmartPlayer with the given <player_id>, <goal>,
+        <difficulty>.
+        Initialize <_proceed> to False
+        """
         # TODO: Implement Me
         Player.__init__(self, player_id, goal)
         self._difficulty = difficulty

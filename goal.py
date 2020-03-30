@@ -173,8 +173,8 @@ class PerimeterGoal(Goal):
     colour: Tuple[int, int, int]
 
     def score(self, board: Block) -> int:
-        """ Return the score that is the side length of the unit cells with the
-        target colour in the board.
+        """Return the score that is the edge length of the unit cells with the
+        target colour in the board. Corner cells are counted twice.
         """
         # TODO: Implement me
         flat_board = _flatten(board)
@@ -205,6 +205,9 @@ class BlobGoal(Goal):
     colour: Tuple[int, int, int]
 
     def score(self, board: Block) -> int:
+        """Return the score of blob goal, which is the maximum size of blob of
+        the <board> given the target colour.
+        """
         # TODO: Implement me
         flat_board = _flatten(board)  # flatten the board
         size = len(flat_board)

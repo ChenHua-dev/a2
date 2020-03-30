@@ -396,22 +396,11 @@ class Block:
         """
         # TODO: Implement me
         if len(self.children) == 0:
-            curr_position = self.position
-            curr_size = self.size
-            curr_colour = self.colour
-            curr_level = self.level
-            curr_max_depth = self.max_depth
-            copy_block = Block(curr_position, curr_size,
-                               curr_colour, curr_level, curr_max_depth)
-            return copy_block
+            return Block(self.position, self.size, self.colour, self.level,
+                         self.max_depth)
         else:
-            curr_position = self.position
-            curr_size = self.size
-            curr_colour = self.colour
-            curr_level = self.level
-            curr_max_depth = self.max_depth
-            copy_block = Block(curr_position, curr_size,
-                               curr_colour, curr_level, curr_max_depth)
+            copy_block = Block(self.position, self.size,
+                               self.colour, self.level, self.max_depth)
             for child in self.children:
                 temp = child.create_copy()
                 copy_block.children.append(temp)
