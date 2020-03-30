@@ -197,8 +197,7 @@ class Block:
             child_position = self._children_positions()
             # 1. Set the position of this Block to <position>
             self.position = position
-            # 2. Update all descendants to have position consistent with this
-            #    Block's
+            # 2. Update all descendants to have position consistent with Block
             for i in range(len(self.children)):
                 new_child_x = child_position[i][0] + dx
                 new_child_y = child_position[i][1] + dy

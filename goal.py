@@ -177,23 +177,6 @@ class PerimeterGoal(Goal):
         target colour in the board.
         """
         # TODO: Implement me
-        # s = 0
-        # flat_board = _flatten(board)
-        # board_size = len(flat_board)
-        # for i in range(board_size):
-        #     # top edge
-        #     if flat_board[i][0] == self.colour:
-        #         s += 1
-        #     # bottom edge
-        #     if flat_board[i][-1] == self.colour:
-        #         s += 1
-        #     #
-        #     if flat_board[0][i] == self.colour:
-        #         s += 1
-        #     # score right
-        #     if flat_board[-1][i] == self.colour:
-        #         s += 1
-        # return s
         flat_board = _flatten(board)
         upper = [flat_board[i][0] for i in range(len(flat_board))]
         lower = [flat_board[i][-1] for i in range(len(flat_board))]
