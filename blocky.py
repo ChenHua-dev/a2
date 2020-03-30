@@ -49,7 +49,16 @@ def _block_to_squares(board: Block) -> List[Tuple[Tuple[int, int, int],
     The order of the squares does not matter.
     """
     # TODO: Implement me
-    return []  # FIXME
+    if len(board.children) == 0:
+        curr_colour = board.colour
+        curr_position = board.position
+        curr_size = board.size
+        return [(curr_colour, curr_position, curr_size)]
+    else:
+        s = []
+        for child in board.children:
+            s += _block_to_squares(child)
+        return s
 
 
 class GameData:
