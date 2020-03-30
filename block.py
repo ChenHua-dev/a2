@@ -46,28 +46,6 @@ def generate_board(max_depth: int, size: int) -> Block:
 
     return board
 
-# BOARD_SIZE = 750
-# max_depth = 3
-# generate_board(3, 750)
-# board = Block((0, 0), 750, random.choice(COLOUR_LIST), 0, 3)
-# from block import random as a2_random
-# SEED_NUMBER = 1214
-# random.seed(SEED_NUMBER)
-# a2_random.seed(SEED_NUMBER)
-# def block_bfs(block):
-#     res = []
-#     acc = [block]
-#     while acc:
-#         temp = acc.pop(0)
-#         res.append(temp)
-#         for child in temp.children:
-#             acc.append(child)
-#     return res
-
-# temp = Block((0, 0), 100, None, 0, 2)
-# temp.smash()
-# bfs = block_bfs(temp)
-
 
 class Block:
     """A square Block in the Blocky game, represented as a tree.
@@ -246,19 +224,16 @@ class Block:
         curr_size = round(size / 2.0)
         parent_level = level - 1
         block = Block((0, 0), curr_size, None, level, max_depth)
-        if block.smashable():
-        # if level < max_depth:  # when level < max_depth
-            rn = random.random()
-            if rn < math.exp(-0.25 * parent_level): # subdivide further
-                child_0 = self._smash_helper(curr_size, level + 1, max_depth)
-                child_1 = self._smash_helper(curr_size, level + 1, max_depth)
-                child_2 = self._smash_helper(curr_size, level + 1, max_depth)
-                child_3 = self._smash_helper(curr_size, level + 1, max_depth)
-                block.children.extend([child_0, child_1, child_2, child_3])
-            else:
-                block.colour = random.choice(COLOUR_LIST)
+        rn = random.random()
+        # subdivide further
+        if block.smashable() and rn < math.exp(-0.25 * parent_level):
+            child_0 = self._smash_helper(curr_size, level + 1, max_depth)
+            child_1 = self._smash_helper(curr_size, level + 1, max_depth)
+            child_2 = self._smash_helper(curr_size, level + 1, max_depth)
+            child_3 = self._smash_helper(curr_size, level + 1, max_depth)
+            block.children = [child_0, child_1, child_2, child_3]
             return block
-        else:  # when level == max_depth
+        else:
             block.colour = random.choice(COLOUR_LIST)
             return block
 
@@ -375,23 +350,6 @@ class Block:
             return True
         return False
 
-    # def paint(self, colour: Tuple[int, int, int]) -> bool:
-    #     """Change this Block's colour iff it is a leaf at a level of max_depth
-    #     and its colour is different from <colour>.
-    #
-    #     Return True iff this Block's colour was changed.
-    #     """
-    #     # TODO: Implement me
-    #     if self.level == self.max_depth:
-    #         # check if this is a leaf
-    #         if len(self.children) != 0:
-    #             return False
-    #         else:  # elif len(self.children) == 0:
-    #             if self.colour != colour:
-    #                 self.colour = colour
-    #             return True
-    #     return False
-
     def combine(self) -> bool:
         """Turn this Block into a leaf based on the majority colour of its
         children.
@@ -473,11 +431,11 @@ if __name__ == '__main__':
     })
 
     # This is a board consisting of only one block.
-    # b1 = Block((0, 0), 750, COLOUR_LIST[0], 0, 1)
-    # print("=== tiny board ===")
-    # print(b1)
+    b1 = Block((0, 0), 750, COLOUR_LIST[0], 0, 1)
+    print("=== tiny board ===")
+    print(b1)
 
     # Now let's make a random board.
-    # b2 = generate_board(3, 750)
-    # print("\n=== random board ===")
-    # print(b2)
+    b2 = generate_board(3, 750)
+    print("\n=== random board ===")
+    print(b2)

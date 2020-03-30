@@ -121,8 +121,10 @@ def _get_block(block: Block, location: Tuple[int, int], level: int) -> \
 
 def _generate_random_block(board: Block) -> \
         Tuple[Block, Optional[Block], Tuple[int, int], int]:
-    """Return
-
+    """Return a tuple that contains the copy of the original <board>,
+    randomly generated block based on random position and random level.
+    If the randomly selected position is not valid, return None instead of the
+    random block.
     """
     # 1. Make deep copy of the board
     copied_board = board.create_copy()
@@ -148,6 +150,8 @@ def _generate_random_block(board: Block) -> \
 
 def _generate_random_move(actions: Dict[int, Tuple[str, Optional[int]]]) -> \
         Tuple[str, Optional[int]]:
+    """Return a randomly generated action from <actions>
+    """
     # Generating random move
     potential_moves = []
     for value in actions.values():
@@ -280,10 +284,13 @@ class HumanPlayer(Player):
 
 
 class RandomPlayer(Player):
-    # === Private Attributes ===
-    # _proceed:
-    #   True when the player should make a move, False when the player should
-    #   wait.
+    """Generate a random player in the Blocky game.
+
+    === Private Attributes ===
+    _proceed:
+        True when the player should make a move, False when the player should
+        wait.
+    """
     _proceed: bool
 
     def __init__(self, player_id: int, goal: Goal) -> None:
@@ -330,12 +337,18 @@ class RandomPlayer(Player):
 
 
 class SmartPlayer(Player):
-    # === Private Attributes ===
-    # _proceed:
-    #   True when the player should make a move, False when the player should
-    #   wait.
-    _difficulty: int
+    """Generate a smart player in the Blocky game.
+
+    === Private Attributes ===
+    _proceed:
+        True when the player should make a move, False when the player should
+        wait.
+    _difficulty:
+        A integer that shows the number of moves a smart player can generate for
+        each turn
+    """
     _proceed: bool
+    _difficulty: int
 
     def __init__(self, player_id: int, goal: Goal, difficulty: int) -> None:
         # TODO: Implement Me

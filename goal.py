@@ -64,8 +64,9 @@ def generate_goals(num_goals: int) -> List[Goal]:
 
 
 def _generate_square_matrix(matrix_size: int, content: Any) -> List[List[Any]]:
-    """Return ...
-
+    """Return a two-dimensional list with the same <content>. The length of this
+    two-dimensional Python list is the same as the length of every list
+    contained.
     """
     square_matrix = []
     for _ in range(matrix_size):
@@ -76,22 +77,25 @@ def _generate_square_matrix(matrix_size: int, content: Any) -> List[List[Any]]:
     return square_matrix
 
 
-def _distribute_colours(accumulator: List[List[Optional[Tuple[int, int, int]]]],
-                        colour_matrix: List[List[Tuple[int, int, int]]],
-                        size: int, children_index: int) -> None:
-    """Assign ...
-
+def _distribute_colours(acc: List[List[Optional[Tuple[int, int, int]]]],
+                        flat_colour: List[List[Tuple[int, int, int]]],
+                        size: int, child_index: int) -> None:
+    """Assign every tuple from <flat_colour> two-dimensional list to <acc>.
+    <acc> a two-dimensional list, each list in <acc> represents a column of
+    colours at unit cell level or None. <size> is the size of the unit cell.
+    <child_index> is the index position of the children in a Block object if
+    the Block object has children.
     """
     for i in range(size):
         for j in range(size):
-            if children_index == 0:
-                accumulator[i+size][j] = colour_matrix[i][j]
-            if children_index == 1:
-                accumulator[i][j] = colour_matrix[i][j]
-            if children_index == 2:
-                accumulator[i][j+size] = colour_matrix[i][j]
-            if children_index == 3:
-                accumulator[i+size][j+size] = colour_matrix[i][j]
+            if child_index == 0:
+                acc[i+size][j] = flat_colour[i][j]
+            if child_index == 1:
+                acc[i][j] = flat_colour[i][j]
+            if child_index == 2:
+                acc[i][j+size] = flat_colour[i][j]
+            if child_index == 3:
+                acc[i+size][j+size] = flat_colour[i][j]
 
 
 def _flatten(block: Block) -> List[List[Tuple[int, int, int]]]:
@@ -158,38 +162,68 @@ class Goal:
 
 
 class PerimeterGoal(Goal):
+    """A perimeter goal in the game of Blocky.
+
+    Calculate the score of the unit cells of target colour in the side of
+    the block.
+
+    === Public Attributes ===
+    colour: The target colour of the block
+    """
+    colour: Tuple[int, int, int]
+
     def score(self, board: Block) -> int:
+        """ Return the score that is the side length of the unit cells with the
+        target colour in the board.
+        """
         # TODO: Implement me
-        s = 0
+        # s = 0
+        # flat_board = _flatten(board)
+        # board_size = len(flat_board)
+        # for i in range(board_size):
+        #     # top edge
+        #     if flat_board[i][0] == self.colour:
+        #         s += 1
+        #     # bottom edge
+        #     if flat_board[i][-1] == self.colour:
+        #         s += 1
+        #     #
+        #     if flat_board[0][i] == self.colour:
+        #         s += 1
+        #     # score right
+        #     if flat_board[-1][i] == self.colour:
+        #         s += 1
+        # return s
         flat_board = _flatten(board)
-        board_size = len(flat_board)
-        for i in range(board_size):
-            # score upper
-            if flat_board[i][0] == self.colour:
-                s += 1
-            # score lower
-            if flat_board[i][-1] == self.colour:
-                s += 1
-            # score left
-            if flat_board[0][i] == self.colour:
-                s += 1
-            # score right
-            if flat_board[-1][i] == self.colour:
-                s += 1
-        return s
+        upper = [flat_board[i][0] for i in range(len(flat_board))]
+        lower = [flat_board[i][-1] for i in range(len(flat_board))]
+        left = flat_board[0]
+        right = flat_board[-1]
+        return upper.count(self.colour) + lower.count(self.colour) + left.count(
+            self.colour) + right.count(self.colour)
 
     def description(self) -> str:
+        """Return a string that describes the perimeter goal with target colour.
+        """
         # TODO: Implement me
         colour = colour_name(self.colour)
-        return 'The goal aims to calculate the total number of unit ' \
-               'cells with coloour {0} in the perimeter'.format(colour)
+        return 'Goal is to calculate the total number of unit cells ' \
+               'with colour {0}'.format(colour)
 
 
 class BlobGoal(Goal):
+    """A blob goal in the game of Blocky.
+
+    Calculate the score of the target colour by the largest blob.
+
+    === Public Attributes ===
+    colour: The target colour of the block
+    """
+    colour: Tuple[int, int, int]
+
     def score(self, board: Block) -> int:
         # TODO: Implement me
-        # # flattening the tree/block
-        flat_board = _flatten(board)
+        flat_board = _flatten(board)  # flatten the board
         size = len(flat_board)
         unvisited_cells = _generate_square_matrix(size, -1)
 
@@ -249,10 +283,12 @@ class BlobGoal(Goal):
                 return 1 + upper + lower + left + right
 
     def description(self) -> str:
+        """Return a string that describes the blob goal with target colour.
+        """
         # TODO: Implement me
         colour = colour_name(self.colour)
         return 'Player creates the largest possible ' \
-               'blob of blocks using colour of {0}'.format(colour)
+               'blob of blocks using colour {0}'.format(colour)
 
 
 if __name__ == '__main__':
