@@ -308,9 +308,16 @@ class RandomPlayer(Player):
         self._proceed = False
 
     def get_selected_block(self, board: Block) -> Optional[Block]:
+        """Return None for random player. Block selection is through
+        generate_move method
+        """
         return None
 
     def process_event(self, event: pygame.event.Event) -> None:
+        """Respond to the relevant keyboard events made by the human player
+        allowing the random player to start its move. The allowing signal is
+        pressing the mouse button down 1 time.
+        """
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             self._proceed = True
 
@@ -370,9 +377,16 @@ class SmartPlayer(Player):
         self._proceed = False
 
     def get_selected_block(self, board: Block) -> Optional[Block]:
+        """Return None for smart player. Block selection is through
+        generate_move method
+        """
         return None
 
     def process_event(self, event: pygame.event.Event) -> None:
+        """Respond to the relevant keyboard events made by the human player
+        allowing the random player to start its move. The allowing signal is
+        pressing the mouse button down 1 time.
+        """
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             self._proceed = True
 
