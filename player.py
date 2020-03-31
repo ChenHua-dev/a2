@@ -93,11 +93,9 @@ def _get_block(block: Block, location: Tuple[int, int], level: int) -> \
     x = block.position[0]
     y = block.position[1]
     d = round(block.size / 2.0)
-    # target location
     target_x = location[0]
     target_y = location[1]
 
-    # if x <= target_x < x + 2 * d and y <= target_y < y + 2 * d:
     if x <= target_x < x + block.size and y <= target_y < y + block.size:
         if len(block.children) == 0:
             return block
@@ -339,26 +337,15 @@ class RandomPlayer(Player):
 
         This function does not mutate <board>.
         """
+        # TODO: Implement Me
         if not self._proceed:
             return None
-        # TODO: Implement Me
         valid_move = False
         while valid_move is False:
             random_result = _generate_random_block(board)
-
             if random_result[1] is not None:
                 action = _generate_random_move(KEY_ACTION)
                 valid_move = _validate_move(action, random_result[1], self.goal)
-                # if action in [ROTATE_CLOCKWISE, ROTATE_COUNTER_CLOCKWISE]:
-                #     valid_move = random_result[1].rotate(action[1])
-                # elif action in [SWAP_HORIZONTAL, SWAP_VERTICAL]:
-                #     valid_move = random_result[1].swap(action[1])
-                # elif action == SMASH:
-                #     valid_move = random_result[1].smash()
-                # elif action == PAINT:
-                #     valid_move = random_result[1].paint(self.goal.colour)
-                # elif action == COMBINE:
-                #     valid_move = random_result[1].combine()
                 if valid_move:
                     block = _get_block(board, random_result[2],
                                        random_result[3])
@@ -366,27 +353,6 @@ class RandomPlayer(Player):
 
                     self._proceed = False
                     return move
-        # ======================== Old implementation ======================== #
-        # if not self._proceed:
-        #     return None  # Do not remove
-        # # if proceed is True
-        # else:
-        #     # TODO: Implement Me
-        #     # Extract the temporary board
-        #     random_outcome = _generate_random_block(board)
-        #     random_block = random_outcome[1]
-        #     random_pos = random_outcome[2]
-        #     random_level = random_outcome[3]
-        #     if random_block is None:
-        #         return None
-        #
-        #     action = _generate_random_move(KEY_ACTION)  # this is a tuple
-        #     block = _get_block(board, random_pos, random_level)
-        #     move = _create_move(action, block)
-        #
-        #     self._proceed = False  # Must set to False before returning!
-        #     return move
-        ########################################################################
 
 
 class SmartPlayer(Player):
@@ -445,112 +411,37 @@ class SmartPlayer(Player):
         best_score, best_action, best_pos, best_level = None, None, None, None
         for _ in range(self._difficulty):
             valid_move = False
-            while valid_move is False:
+            stop_criteria = {}
+            while valid_move is False and \
+                    len(stop_criteria) < len(KEY_ACTION) - 1:
                 # copied_board, random_block, random_pos, random_level
                 random_result = _generate_random_block(board)
-                if random_result[1] is not None:
-
-                    action = _generate_random_move(KEY_ACTION)
+                action = _generate_random_move(KEY_ACTION)
+                if random_result[1] is None:
+                    valid_move = False
+                else:
                     valid_move = _validate_move(action, random_result[1],
                                                 self.goal)
-                    # if action in [ROTATE_CLOCKWISE, ROTATE_COUNTER_CLOCKWISE]:
-                    #     valid_move = random_result[1].rotate(action[1])
-                    # elif action in [SWAP_HORIZONTAL, SWAP_VERTICAL]:
-                    #     valid_move = random_result[1].swap(action[1])
-                    # elif action == SMASH:
-                    #     valid_move = random_result[1].smash()
-                    # elif action == PAINT:
-                    #     valid_move = random_result[1].paint(self.goal.colour)
-                    # elif action == COMBINE:
-                    #     valid_move = random_result[1].combine()
-                    # print(valid_move)
+
+                if valid_move and \
+                        self.goal.score(random_result[0]) > \
+                        self.goal.score(board) and \
+                        (best_score is None or best_score <
+                         self.goal.score(random_result[0])):
                     best_score, best_action, best_pos, best_level = \
-                        _find_best(valid_move,
-                                   (self.goal, best_score, action),
-                                   board,
-                                   random_result)
-                    # if valid_move:
-                    #     if self.goal.score(random_result[0]) > \
-                    #             self.goal.score(board):
-                    #         if best_score is None or best_score < \
-                    #                 self.goal.score(random_result[0]):
-                    #             best_score = self.goal.score(random_result[0])
-                    #             best_action = action
-                    #             best_pos = random_result[2]  # random_pos
-                    #             best_level = random_result[3]
+                        self.goal.score(random_result[0]), action, \
+                        random_result[2], random_result[3]
+                elif not valid_move and action not in stop_criteria:
+                    stop_criteria[action] = 0
+                elif not valid_move and action in stop_criteria:
+                    stop_criteria[action] += 1
+
         self._proceed = False
         if best_score is None:
-            return _create_move(PASS, Block((0, 0), 1, None, 0, 1))
+            return _create_move(PASS, board)
         else:
             return _create_move(best_action,
                                 _get_block(board, best_pos, best_level))
-        # ======================== Old implementation ======================== #
-        # if not self._proceed:
-        #     return None
-        # curr_score = self.goal.score(board)  # calculate current score
-        # best_score, best_action, best_pos, best_level = None, None, None, None
-        # for _ in range(self._difficulty):
-        #     # 1. Generate random block in order of:
-        #     #    copied_board, random_block, random_pos, random_level
-        #     random_outcome = _generate_random_block(board)
-        #     if random_outcome[1] is None:
-        #         return None
-        #     # 2. Generate random move: Tuple[action name, direction number]
-        #     action = _generate_random_move(KEY_ACTION)
-        #
-        #     # 3. For copied_board and random_block (from copied board).
-        #     #    Calculate each new score
-        #     if action in [ROTATE_CLOCKWISE, ROTATE_COUNTER_CLOCKWISE]:
-        #         random_outcome[1].rotate(action[1])
-        #     elif action in [SWAP_HORIZONTAL, SWAP_VERTICAL]:
-        #         random_outcome[1].swap(action[1])
-        #     elif action == SMASH:
-        #         random_outcome[1].smash()
-        #     elif action == PAINT:
-        #         random_outcome[1].paint(self.goal.colour)
-        #     elif action == COMBINE:
-        #         random_outcome[1].combine()
-        #
-        #     # 4. calculate new score based on mutate copied board
-        #     new_score = self.goal.score(random_outcome[0])
-        #     if new_score > curr_score:
-        #         if best_score is None or best_score < new_score:
-        #             best_score = new_score
-        #             best_action = action
-        #             best_pos = random_outcome[2]  # random_pos
-        #             best_level = random_outcome[3]  # random_level
-        #
-        # self._proceed = False  # Must set to False before returning!
-        # if best_score is None:
-        #     return _create_move(PASS, Block((0, 0), 1, None, 0, 1))
-        # else:
-        #     best_move = \
-        #         _create_move(best_action,
-        #                      _get_block(board, best_pos, best_level))
-        #     return best_move
-
-
-def _find_best(valid_move: bool,
-               criteria: Tuple[Goal, Optional[int], Tuple[str, Optional[int]]],
-               board: Block,
-               random_result: Tuple[Block, Optional[Block],
-                                    Tuple[int, int], int]) -> \
-        Tuple[Optional[int],
-              Optional[Tuple[str, Optional[int]]],
-              Optional[Tuple[int, int]], Optional[int]]:
-    """Return
-    """
-    goal = criteria[0]
-    best_score = criteria[1]
-    action = criteria[2]
-    if valid_move and \
-            goal.score(random_result[0]) > goal.score(board) and \
-            (best_score is None or best_score < goal.score(random_result[0])):
-        new_score = goal.score(random_result[0])
-
-        return new_score, action, random_result[2], random_result[3]
-    else:
-        return None, None, None, None
 
 
 if __name__ == '__main__':
