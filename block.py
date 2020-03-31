@@ -22,11 +22,12 @@ Misha Schwartz, and Jaisie Sin
 This file contains the Block class, the main data structure used in the game.
 """
 from __future__ import annotations
-from typing import Optional, Tuple, List
-import random
-import math
 
-from settings import colour_name, COLOUR_LIST
+import math
+import random
+from typing import List, Optional, Tuple
+
+from settings import COLOUR_LIST, colour_name
 
 
 def generate_board(max_depth: int, size: int) -> Block:
@@ -187,7 +188,6 @@ class Block:
         <position> is the (x, y) coordinates of the upper-left corner of this
         Block.
         """
-        # TODO: Implement me
         dx = position[0] - self.position[0]
         dy = position[1] - self.position[1]
         if len(self.children) <= 0:
@@ -224,7 +224,6 @@ class Block:
         parent_level = level - 1
         block = Block((0, 0), curr_size, None, level, max_depth)
         rn = random.random()
-        # subdivide further
         if block.smashable() and rn < math.exp(-0.25 * parent_level):
             for _ in range(4):
                 block.children.append(
@@ -243,18 +242,12 @@ class Block:
 
         Return True iff the smash was performed.
         """
-        # TODO: Implement me
-        if self.smashable():  # Block is not yet at its max depth
-            # 1. turn block colour off
+        if self.smashable():
             self.colour = None
-            # 2. current block size
             size = self.size
-            # 3. children level
             child_level = self.level + 1
-            # 4. maximum depth for sub-blocks within this block
             max_depth = self.max_depth
 
-            # 5. appending children blocks
             for _ in range(4):
                 self.children.append(
                     self._smash_helper(size, child_level, max_depth))
@@ -273,20 +266,15 @@ class Block:
 
         Precondition: <direction> is either 0 or 1
         """
-        # TODO: Implement me
         if len(self.children) == 4:
-            # Record Block objects for 4 children
             child_0 = self.children[0]
             child_1 = self.children[1]
             child_2 = self.children[2]
             child_3 = self.children[3]
-            # vertical-swap
             if direction == 1:
                 self.children = [child_3, child_2, child_1, child_0]
-            # horizontal-swap
             elif direction == 0:
                 self.children = [child_1, child_0, child_3, child_2]
-            # Update children positions
             self._update_children_positions(self.position)
             return True
         else:
@@ -302,33 +290,22 @@ class Block:
 
         Precondition: <direction> is either 1 or 3.
         """
-        # TODO: Implement me
-        # Clockwise rotation
         if direction == 1:
-            # Base case
             if len(self.children) == 0:
                 return False
-            # Recursive case
             else:
-                # Getting first child
                 child_0 = self.children.pop(0)
                 self.children.append(child_0)
-                # Update children positions
                 self._update_children_positions(self.position)
                 for child in self.children:
                     child.rotate(direction)
                 return True
-        # Counter-clockwise rotation
-        else:  # elif direction == 3:
-            # Base case
+        else:
             if len(self.children) == 0:
                 return False
-            # Recursive case
             else:
-                # Getting last child
                 child_3 = self.children.pop()
                 self.children.insert(0, child_3)
-                # Update children positions
                 self._update_children_positions(self.position)
                 for child in self.children:
                     child.rotate(direction)
@@ -358,24 +335,19 @@ class Block:
 
         Return True iff this Block was turned into a leaf node.
         """
-        # TODO: Implement me
         if self.level == self.max_depth - 1 and len(self.children) == 4:
-            # 1. Calculating colour frequency
             colour_count = {}
             for child in self.children:
                 if child.colour not in colour_count:
                     colour_count[child.colour] = [child.colour, 1]
                 else:
                     colour_count[child.colour][1] += 1
-
-            # 2. Extract colour max occurrence
             colour_list = list(colour_count.values())
             max_occur = max(colour_list, key=lambda x: x[1])
             acc = 0
             for item in colour_list:
                 if item[1] == max_occur[1]:
                     acc += 1
-            # if max occurrence occurs more than 1 time
             if acc > 1:
                 return False
             else:
@@ -390,7 +362,6 @@ class Block:
 
         Remember that a deep copy has new blocks (not aliases) at every level.
         """
-        # TODO: Implement me
         if len(self.children) == 0:
             return Block(self.position, self.size, self.colour, self.level,
                          self.max_depth)
@@ -405,6 +376,7 @@ class Block:
 
 if __name__ == '__main__':
     import python_ta
+
     python_ta.check_all(config={
         'allowed-import-modules': [
             'doctest', 'python_ta', 'random', 'typing', '__future__', 'math',

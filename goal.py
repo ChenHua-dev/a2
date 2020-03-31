@@ -39,28 +39,17 @@ def generate_goals(num_goals: int) -> List[Goal]:
     Precondition:
         - num_goals <= len(COLOUR_LIST)
     """
-    # TODO: Implement Me
-    # Choosing between Perimeter and Blob goal
-    # 0 represents PerimeterGoal; 1 represents BlobGoal
-    rn = random.randint(0, 1)
-
-    length_colour_list = len(COLOUR_LIST)
-    index_list = list(range(0, length_colour_list))
-
-    if rn == 0:
-        s = []
-        for _ in range(num_goals):
-            temp = random.choice(index_list)
-            s.append(PerimeterGoal(COLOUR_LIST[temp]))
-            index_list.remove(temp)
-        return s
-    else:  # elif rn == 1:
-        s = []
-        for _ in range(num_goals):
-            temp = random.choice(index_list)
-            s.append(BlobGoal(COLOUR_LIST[temp]))
-            index_list.remove(temp)
-        return s
+    num_choose = random.randint(1, 2)
+    color_copy = COLOUR_LIST[:]
+    result = []
+    for _ in range(num_goals):
+        get_color = random.choice(color_copy)
+        color_copy.remove(get_color)
+        if num_choose == 1:
+            result.append(PerimeterGoal(get_color))
+        else:
+            result.append(BlobGoal(get_color))
+    return result
 
 
 def _generate_square_matrix(matrix_size: int, content: Any) -> List[List[Any]]:
@@ -112,17 +101,13 @@ def _flatten(block: Block) -> List[List[Tuple[int, int, int]]]:
 
     L[0][0] represents the unit cell in the upper left corner of the Block.
     """
-    # TODO: Implement me
-    # Base case: when there is no children
     if len(block.children) == 0:
         cell_size = int(math.pow(2, block.max_depth - block.level))
         square_matrix = _generate_square_matrix(cell_size, block.colour)
         return square_matrix
-    # Recursive case: when there are children under internal node
     else:
         block_size = int(math.pow(2, block.max_depth - block.level))
         child_size = round(block_size / 2.0)
-        # List for return in the recursive case from Parent block
         acc = _generate_square_matrix(block_size, None)
         for i in range(len(block.children)):
             # Gather flattened block from child
@@ -176,7 +161,6 @@ class PerimeterGoal(Goal):
         """Return the score that is the edge length of the unit cells with the
         target colour in the board. Corner cells are counted twice.
         """
-        # TODO: Implement me
         flat_board = _flatten(board)
         upper = [flat_board[i][0] for i in range(len(flat_board))]
         lower = [flat_board[i][-1] for i in range(len(flat_board))]
@@ -188,7 +172,6 @@ class PerimeterGoal(Goal):
     def description(self) -> str:
         """Return a string that describes the perimeter goal with target colour.
         """
-        # TODO: Implement me
         colour = colour_name(self.colour)
         return 'Goal is to calculate the total number of unit cells ' \
                'with colour {0}'.format(colour)
@@ -208,7 +191,6 @@ class BlobGoal(Goal):
         """Return the score of blob goal, which is the maximum size of blob of
         the <board> given the target colour.
         """
-        # TODO: Implement me
         flat_board = _flatten(board)  # flatten the board
         size = len(flat_board)
         unvisited_cells = _generate_square_matrix(size, -1)
@@ -244,24 +226,20 @@ class BlobGoal(Goal):
         Update <visited> so that all cells that are visited are marked with
         either 0 or 1.
         """
-        # TODO: Implement me
         i = pos[0]
         j = pos[1]
         board_size = len(board)
 
-        # out of bound
         if not (0 <= i < board_size and 0 <= j < board_size):
             return 0
         if visited[i][j] == 0 or visited[i][j] == 1:
             return 0
-        else:  # within bound and the current cell hasn't been visited
-            # if current cell's colour is not the same as target colour
+        else:
             if board[i][j] != self.colour:
                 visited[i][j] = 0
                 return 0
-            else:  # if current cell's colour is the same as target colour
+            else:
                 visited[i][j] = 1
-                # upper, lower, left, right connected unit cells, respectively
                 upper = self._undiscovered_blob_size((i-1, j), board, visited)
                 lower = self._undiscovered_blob_size((i+1, j), board, visited)
                 left = self._undiscovered_blob_size((i, j-1), board, visited)
@@ -271,7 +249,6 @@ class BlobGoal(Goal):
     def description(self) -> str:
         """Return a string that describes the blob goal with target colour.
         """
-        # TODO: Implement me
         colour = colour_name(self.colour)
         return 'Player creates the largest possible ' \
                'blob of blocks using colour {0}'.format(colour)
