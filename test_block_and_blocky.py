@@ -909,7 +909,23 @@ class TestBlocky(TestBlock):
         BlockC = self.BlockC.create_copy()
         c1 = ((1, 128, 181), (1398123, 1239129), BlockC._child_size())
         c3 = ((199, 44, 58), (1398123 + BlockC._child_size(), 1239129 + BlockC._child_size()), BlockC._child_size())
-        pass
+        c0_pos = BlockC.children[0]._children_positions()
+        c0_size = BlockC.children[0]._child_size()
+        c00 = ((255, 211, 92), c0_pos[0], c0_size)
+        c01 = ((255, 211, 92), c0_pos[1], c0_size)
+        c02 = ((138, 151, 71), c0_pos[2], c0_size)
+        c03 = ((1, 128, 181), c0_pos[3], c0_size)
+        c2_pos = BlockC.children[2]._children_positions()
+        c20 = ((199, 44, 58), c2_pos[0], c0_size)
+        c21 = ((123, 121, 438), c2_pos[1], c0_size)
+        c22 = ((123, 482, 12), c2_pos[2], c0_size)
+        c23 = ((89, 123, 234), c2_pos[3], c0_size)
+        expect = [c1, c3, c00, c01, c02, c03, c20, c21, c22, c23]
+        actual = _block_to_squares(BlockC)
+        self.assertEqual(len(expect), len(actual), "Fail to create exact number of nodes")
+        for item in expect:
+            self.assertTrue(item in actual, "Fail to get the attributes correct")
+
 
 
 

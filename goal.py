@@ -84,10 +84,10 @@ def _flatten(block: Block) -> List[List[Tuple[int, int, int]]]:
     x_values.sort()
     y_values.sort()
     result = []
-    for y in y_values:
+    for x in x_values:
         x_lst = []
-        for x in x_values:
-            x_lst.append(p2c[(y, x)])
+        for y in y_values:
+            x_lst.append(p2c[(x, y)])
         result.append(x_lst)
     return result
 
@@ -101,7 +101,10 @@ def _get_block_to_max_depth(block: Block) -> Block:
         block.colour = None
         x = block.position[0]
         y = block.position[1]
-        d = block.size / 2.0
+        if round(block.size / 2.0) == 0:
+            d = block.size / 2.0
+        else:
+            d = round(block.size / 2.0)
         child0 = Block((x + d, y), d, target_color, block.level + 1,
                        block.max_depth)
         child1 = Block((x, y), d, target_color, block.level + 1,
