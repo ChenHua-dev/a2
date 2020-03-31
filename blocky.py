@@ -50,10 +50,7 @@ def _block_to_squares(board: Block) -> List[Tuple[Tuple[int, int, int],
     """
     # TODO: Implement me
     if len(board.children) == 0:
-        curr_colour = board.colour
-        curr_position = board.position
-        curr_size = board.size
-        return [(curr_colour, curr_position, curr_size)]
+        return [(board.colour, board.position, board.size)]
     else:
         s = []
         for child in board.children:

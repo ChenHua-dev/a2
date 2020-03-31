@@ -226,11 +226,9 @@ class Block:
         rn = random.random()
         # subdivide further
         if block.smashable() and rn < math.exp(-0.25 * parent_level):
-            child_0 = self._smash_helper(curr_size, level + 1, max_depth)
-            child_1 = self._smash_helper(curr_size, level + 1, max_depth)
-            child_2 = self._smash_helper(curr_size, level + 1, max_depth)
-            child_3 = self._smash_helper(curr_size, level + 1, max_depth)
-            block.children = [child_0, child_1, child_2, child_3]
+            for _ in range(4):
+                block.children.append(
+                    self._smash_helper(curr_size, level + 1, max_depth))
             return block
         else:
             block.colour = random.choice(COLOUR_LIST)
@@ -257,11 +255,9 @@ class Block:
             max_depth = self.max_depth
 
             # 5. appending children blocks
-            child_0 = self._smash_helper(size, child_level, max_depth)
-            child_1 = self._smash_helper(size, child_level, max_depth)
-            child_2 = self._smash_helper(size, child_level, max_depth)
-            child_3 = self._smash_helper(size, child_level, max_depth)
-            self.children = [child_0, child_1, child_2, child_3]
+            for _ in range(4):
+                self.children.append(
+                    self._smash_helper(size, child_level, max_depth))
             self._update_children_positions(self.position)
             return True
         else:
