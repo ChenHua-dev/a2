@@ -46,7 +46,6 @@ def create_players(num_human: int, num_random: int, smart_players: List[int]) \
     objects as the length of <smart_players>. The difficulty levels in
     <smart_players> should be applied to each SmartPlayer object, in order.
     """
-    # TODO: Implement Me
     acc = []
     id_index = 0
     for _ in range(num_human):
@@ -84,6 +83,7 @@ def _get_block(block: Block, location: Tuple[int, int], level: int) -> \
 
     Preconditions:
         - 0 <= level <= max_depth
+        - block.level <= level <= max_depth
     """
     x = block.position[0]
     y = block.position[1]
