@@ -191,13 +191,10 @@ class Block:
         dx = position[0] - self.position[0]
         dy = position[1] - self.position[1]
         if len(self.children) <= 0:
-            # 1. Set the position of this Block to <position>
             self.position = position
         else:
             child_position = self._children_positions()
-            # 1. Set the position of this Block to <position>
             self.position = position
-            # 2. Update all descendants to have position consistent with Block
             for i in range(len(self.children)):
                 new_child_x = child_position[i][0] + dx
                 new_child_y = child_position[i][1] + dy
@@ -212,50 +209,50 @@ class Block:
         """
         return self.level != self.max_depth and len(self.children) == 0
 
-    def _smash_helper(self, size: int, level: int, max_depth: int) -> Block:
-        """Return a Block instance that is randomly-generated with the given
-        <level> and <max_depth>
-
-         Subdivided further to the maximum depth:
-            if random.random() < math.exp(-0.25 * level).
-            else create generated block colour with random.choice(COLOUR_LIST)
+    def _smash_child(self) -> None:
+        """Generate a random number. Subdivide the block if the block is
+        smashable and the random_num is less than math.exp(-0.25*self.level)
+        Otherwise, randomly choose a color in the COLOR_LIST and put it
+        into the block
         """
-        curr_size = round(size / 2.0)
-        parent_level = level - 1
-        block = Block((0, 0), curr_size, None, level, max_depth)
-        rn = random.random()
-        if block.smashable() and rn < math.exp(-0.25 * parent_level):
-            for _ in range(4):
-                block.children.append(
-                    self._smash_helper(curr_size, level + 1, max_depth))
-            return block
+        random_num = random.random()
+        if self.smashable() and random_num < math.exp(-0.25 * (self.level - 1)):
+            get_positions = self._children_positions()
+            get_size = self._child_size()
+            self.colour = None
+            get_level = self.level + 1
+            for i in range(4):
+                self.children.append(
+                    Block(get_positions[i], get_size, None, get_level,
+                          self.max_depth))
+            for child in self.children:
+                child._smash_child()
         else:
-            block.colour = random.choice(COLOUR_LIST)
-            return block
+            random_int = random.randint(0, 3)
+            get_color = COLOUR_LIST[random_int]
+            self.colour = get_color
 
     def smash(self) -> bool:
         """Sub-divide this block so that it has four randomly generated
         children.
-
         If this Block's level is <max_depth>, do nothing. If this block has
         children, do nothing.
-
         Return True iff the smash was performed.
         """
         if self.smashable():
+            get_positions = self._children_positions()
+            get_size = self._child_size()
             self.colour = None
-            size = self.size
-            child_level = self.level + 1
-            max_depth = self.max_depth
-
-            for _ in range(4):
+            get_level = self.level + 1
+            for i in range(4):
                 self.children.append(
-                    self._smash_helper(size, child_level, max_depth))
-            self._update_children_positions(self.position)
+                    Block(get_positions[i], get_size, None, get_level,
+                          self.max_depth))
+            for child in self.children:
+                child._smash_child()
             return True
-        else:
-            return False
-
+        return False
+    
     def swap(self, direction: int) -> bool:
         """Swap the child Blocks of this Block.
 

@@ -24,7 +24,7 @@ This file contains the hierarchy of Goal classes.
 from __future__ import annotations
 import math
 import random
-from typing import List, Tuple, Any, Optional
+from typing import List, Tuple, Optional
 from block import Block
 from settings import colour_name, COLOUR_LIST
 
@@ -50,20 +50,6 @@ def generate_goals(num_goals: int) -> List[Goal]:
         else:
             result.append(BlobGoal(get_color))
     return result
-
-
-def _generate_square_matrix(matrix_size: int, content: Any) -> List[List[Any]]:
-    """Return a two-dimensional list with the same <content>. The length of this
-    two-dimensional Python list is the same as the length of every list
-    contained.
-    """
-    square_matrix = []
-    for _ in range(matrix_size):
-        column = []
-        for _ in range(matrix_size):
-            column.append(content)
-        square_matrix.append(column)
-    return square_matrix
 
 
 def _distribute_colours(acc: List[List[Optional[Tuple[int, int, int]]]],
@@ -102,17 +88,14 @@ def _flatten(block: Block) -> List[List[Tuple[int, int, int]]]:
     L[0][0] represents the unit cell in the upper left corner of the Block.
     """
     if len(block.children) == 0:
-        cell_size = int(math.pow(2, block.max_depth - block.level))
-        square_matrix = _generate_square_matrix(cell_size, block.colour)
-        return square_matrix
+        size = int(math.pow(2, block.max_depth - block.level))
+        return [[block.colour for _ in range(size)] for _ in range(size)]
     else:
-        block_size = int(math.pow(2, block.max_depth - block.level))
-        child_size = round(block_size / 2.0)
-        acc = _generate_square_matrix(block_size, None)
+        size = int(math.pow(2, block.max_depth - block.level))
+        acc = [[(0, 0, 0) for _ in range(size)] for _ in range(size)]
         for i in range(len(block.children)):
-            # Gather flattened block from child
             flattened_child = _flatten(block.children[i])
-            _distribute_colours(acc, flattened_child, child_size, i)
+            _distribute_colours(acc, flattened_child, round(size / 2.0), i)
         return acc
 
 
@@ -193,7 +176,7 @@ class BlobGoal(Goal):
         """
         flat_board = _flatten(board)  # flatten the board
         size = len(flat_board)
-        unvisited_cells = _generate_square_matrix(size, -1)
+        unvisited_cells = [[-1 for _ in range(size)] for _ in range(size)]
 
         max_score = None
         for i in range(size):

@@ -48,20 +48,17 @@ def create_players(num_human: int, num_random: int, smart_players: List[int]) \
     """
     # TODO: Implement Me
     acc = []
-    # Generate human player
     id_index = 0
     for _ in range(num_human):
         goals = generate_goals(1)
         acc.append(HumanPlayer(id_index, goals[0]))
         id_index += 1
 
-    # Generate random player
     for _ in range(num_random):
         goals = generate_goals(1)
         acc.append(RandomPlayer(id_index, goals[0]))
         id_index += 1
 
-    # Generate smart player
     for item in smart_players:
         goals = generate_goals(1)
         acc.append(SmartPlayer(id_index, goals[0], item))
@@ -88,8 +85,6 @@ def _get_block(block: Block, location: Tuple[int, int], level: int) -> \
     Preconditions:
         - 0 <= level <= max_depth
     """
-    # TODO: Implement me
-    # block attributes
     x = block.position[0]
     y = block.position[1]
     d = round(block.size / 2.0)
@@ -152,8 +147,8 @@ def _generate_random_move(actions: Dict[int, Tuple[str, Optional[int]]]) -> \
 
 def _validate_move(move: Tuple[str, Optional[int]], block: Block,
                    goal: Goal) -> bool:
-    """Return
-
+    """Return boolean variable to see if <move> has been successfully applied to
+    <block>. True if <move> is successful, false otherwise.
     """
     if move in [ROTATE_CLOCKWISE, ROTATE_COUNTER_CLOCKWISE]:
         return block.rotate(move[1])
@@ -310,7 +305,6 @@ class RandomPlayer(Player):
         """Initialize this RandomPlayer with the given <player_id>, <goal> and
         initialize <_proceed> to False
         """
-        # TODO: Implement Me
         Player.__init__(self, player_id, goal)
         self._proceed = False
 
@@ -337,7 +331,6 @@ class RandomPlayer(Player):
 
         This function does not mutate <board>.
         """
-        # TODO: Implement Me
         if not self._proceed:
             return None
         valid_move = False
@@ -374,7 +367,6 @@ class SmartPlayer(Player):
         <difficulty>.
         Initialize <_proceed> to False
         """
-        # TODO: Implement Me
         Player.__init__(self, player_id, goal)
         self._difficulty = difficulty
         self._proceed = False
@@ -405,7 +397,6 @@ class SmartPlayer(Player):
 
         This function does not mutate <board>.
         """
-        # TODO: Implement Me
         if not self._proceed:
             return None
         best_score, best_action, best_pos, best_level = None, None, None, None
@@ -414,7 +405,6 @@ class SmartPlayer(Player):
             stop_criteria = {}
             while valid_move is False and \
                     len(stop_criteria) < len(KEY_ACTION) - 1:
-                # copied_board, random_block, random_pos, random_level
                 random_result = _generate_random_block(board)
                 action = _generate_random_move(KEY_ACTION)
                 if random_result[1] is None:
