@@ -406,14 +406,15 @@ class SmartPlayer(Player):
             while valid_move is False and \
                     len(stop_criteria) < len(KEY_ACTION) - 1:
                 random_result = _generate_random_block(board)
-                action = _generate_random_move(KEY_ACTION)
+                action = None
                 if random_result[1] is None:
                     valid_move = False
                 else:
+                    action = _generate_random_move(KEY_ACTION)
                     valid_move = _validate_move(action, random_result[1],
                                                 self.goal)
 
-                if valid_move and \
+                if valid_move and action is not None and \
                         self.goal.score(random_result[0]) > \
                         self.goal.score(board) and \
                         (best_score is None or best_score <
@@ -421,9 +422,13 @@ class SmartPlayer(Player):
                     best_score, best_action, best_pos, best_level = \
                         self.goal.score(random_result[0]), action, \
                         random_result[2], random_result[3]
-                elif not valid_move and action not in stop_criteria:
-                    stop_criteria[action] = 0
-                elif not valid_move and action in stop_criteria:
+                elif not valid_move and action is None:
+                    pass
+                elif not valid_move and action is not None \
+                        and action not in stop_criteria:
+                    stop_criteria[action] = 1
+                elif not valid_move and action is not None \
+                        and action in stop_criteria:
                     stop_criteria[action] += 1
 
         self._proceed = False
